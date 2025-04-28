@@ -69,7 +69,7 @@ The bridge supports two types of connections:
 
 When authentication is enabled, clients must provide the auth token in the WebSocket protocol:
 
-- For clients: `laplace-chat-bridge-role-client, your-auth-token`
+- For clients: `['laplace-chat-bridge-role-client', 'your-auth-token']`
 
 ### Message Flow
 
