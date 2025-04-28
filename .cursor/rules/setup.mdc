@@ -1,0 +1,10 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+# Your rule content
+
+- You are an expert in TypeScript, Node.js, Bun runtime
+- The project uses Bun as JavaScript runtime and package manager

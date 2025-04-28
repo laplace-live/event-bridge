@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LAPLACE Chat Bridge Client</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #messages {
+        height: 300px;
+        overflow-y: scroll;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+      }
+      .message {
+        margin-bottom: 8px;
+        padding: 8px;
+        border-radius: 4px;
+      }
+      .received {
+        background-color: #f0f0f0;
+      }
+      .sent {
+        background-color: #e6f7ff;
+      }
+      .error {
+        background-color: #ffd6d6;
+      }
+      pre {
+        white-space: pre-wrap;
+      }
+      input,
+      button,
+      select {
+        padding: 8px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .control-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      #messageContainer {
+        display: block;
+        margin-top: 10px;
+      }
+      .connection-settings {
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        background-color: #f8f8f8;
+      }
+      .connection-settings h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      .input-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .input-group label {
+        width: 120px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>LAPLACE Chat Bridge Client</h1>
+
+    <div class="connection-settings">
+      <h3>Connection Settings</h3>
+      <div class="input-group">
+        <label for="serverHost">Server Host:</label>
+        <input type="text" id="serverHost" value="localhost" style="width: 170px" />
+      </div>
+      <div class="input-group">
+        <label for="serverPort">Port:</label>
+        <input type="number" id="serverPort" value="9696" style="width: 70px" />
+      </div>
+      <div class="input-group">
+        <label for="authToken">Auth Token:</label>
+        <input type="password" id="authToken" placeholder="Leave empty if no auth required" style="width: 200px" />
+      </div>
+    </div>
+
+    <div class="control-group">
+      <button id="connectBtn">Connect</button>
+      <button id="disconnectBtn" disabled>Disconnect</button>
+      <div style="flex-grow: 1"></div>
+      <div>
+        <span id="statusIndicator" style="color: red">Disconnected</span>
+      </div>
+    </div>
+
+    <div id="messageContainer">
+      <input type="text" id="messageInput" placeholder="Type a message" style="width: 70%" />
+      <button id="sendMessageBtn" disabled>Send Message</button>
+    </div>
+
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+
+    <script>
+      let socket = null
+
+      // UI elements
+      const connectBtn = document.getElementById('connectBtn')
+      const disconnectBtn = document.getElementById('disconnectBtn')
+      const sendMessageBtn = document.getElementById('sendMessageBtn')
+      const messageInput = document.getElementById('messageInput')
+      const messagesContainer = document.getElementById('messages')
+      const statusIndicator = document.getElementById('statusIndicator')
+
+      // Connection settings
+      const serverHost = document.getElementById('serverHost')
+      const serverPort = document.getElementById('serverPort')
+      const authToken = document.getElementById('authToken')
+
+      // Event listeners
+      connectBtn.addEventListener('click', connect)
+      disconnectBtn.addEventListener('click', disconnect)
+      sendMessageBtn.addEventListener('click', sendMessage)
+
+      function connect() {
+        // Close any existing connection
+        if (socket) {
+          socket.close()
+        }
+
+        // Get connection settings
+        const host = serverHost.value || 'localhost'
+        const port = serverPort.value || '9696'
+        const token = authToken.value
+
+        // Create connection URL
+        const wsUrl = `ws://${host}:${port}`
+
+        // Setup protocol for authentication if token is provided
+        const protocols = token ? ['client', token] : undefined
+
+        // Create new WebSocket connection with authentication
+        socket = new WebSocket(wsUrl, protocols)
+
+        addMessage(`Connecting to ${wsUrl}${token ? ' with authentication' : ''}`, 'system')
+
+        // Connection opened
+        socket.addEventListener('open', event => {
+          updateStatus('Connected', 'green')
+          addMessage('Connected to WebSocket server', 'system')
+          toggleButtons(true)
+        })
+
+        // Listen for messages
+        socket.addEventListener('message', event => {
+          try {
+            const message = JSON.parse(event.data)
+            addMessage(JSON.stringify(message, null, 2), 'received')
+          } catch (e) {
+            addMessage(event.data, 'received')
+          }
+        })
+
+        // Connection closed
+        socket.addEventListener('close', event => {
+          updateStatus('Disconnected', 'red')
+          addMessage('Disconnected from WebSocket server', 'system')
+          toggleButtons(false)
+        })
+
+        // Connection error
+        socket.addEventListener('error', event => {
+          updateStatus('Error', 'red')
+          addMessage('WebSocket connection error', 'error')
+          toggleButtons(false)
+        })
+      }
+
+      function disconnect() {
+        if (socket) {
+          socket.close()
+          socket = null
+        }
+      }
+
+      function sendMessage() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          const message = messageInput.value
+          if (message) {
+            socket.send(message)
+            addMessage(`Sent: ${message}`, 'sent')
+            messageInput.value = ''
+          }
+        }
+      }
+
+      function toggleButtons(connected) {
+        connectBtn.disabled = connected
+        disconnectBtn.disabled = !connected
+        sendMessageBtn.disabled = !connected
+      }
+
+      function updateStatus(status, color) {
+        statusIndicator.textContent = status
+        statusIndicator.style.color = color
+      }
+
+      function addMessage(message, type) {
+        const msgElement = document.createElement('div')
+        msgElement.classList.add('message', type)
+
+        // Add timestamp
+        const now = new Date()
+        const timestamp = `${now.toLocaleTimeString()}`
+
+        if (type === 'sent' || type === 'received') {
+          msgElement.innerHTML = `<strong>[${timestamp}]</strong><pre>${message}</pre>`
+        } else {
+          msgElement.innerHTML = `<strong>[${timestamp}] ${message}</strong>`
+        }
+
+        messagesContainer.appendChild(msgElement)
+        messagesContainer.scrollTop = messagesContainer.scrollHeight
+      }
+
+      // Press Enter to send
+      messageInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') {
+          sendMessage()
+        }
+      })
+    </script>
+  </body>
+</html>

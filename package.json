@@ -1,0 +1,13 @@
+{
+  "name": "laplace-chat-bridge",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --hot run index.ts"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "prettier": "^3.5.3"
+  }
+}
