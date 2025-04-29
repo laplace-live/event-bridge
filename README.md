@@ -1,4 +1,4 @@
-# LAPLACE Chat Bridge
+# LAPLACE Event Bridge
 
 A specialized WebSocket bridge server that connects LAPLACE Chat to clients.
 
@@ -11,7 +11,7 @@ A specialized WebSocket bridge server that connects LAPLACE Chat to clients.
 
 ## Use Cases
 
-The chat bridge enables various use cases:
+The event bridge enables various use cases:
 
 - Integrate user message events directly with Discord
 - Create custom danmakus layouts in your favorite frontend languages to display chat messages
@@ -26,8 +26,8 @@ The chat bridge enables various use cases:
 
 ```bash
 # Clone the repository
-git clone https://github.com/laplace-live/chat-bridge
-cd chat-bridge
+git clone https://github.com/laplace-live/event-bridge
+cd event-bridge
 
 # Install dependencies
 bun install
@@ -39,7 +39,7 @@ The bridge supports authentication via an environment variable:
 
 ```bash
 # Set authentication token (optional but recommended)
-export LAPLACE_CHAT_BRIDGE_AUTH="your-secure-token"
+export LAPLACE_EVENT_BRIDGE_AUTH="your-secure-token"
 ```
 
 If the authentication token is set, all connections including the clients must provide it to connect.
@@ -62,14 +62,14 @@ The WebSocket bridge server runs on `http://localhost:9696`.
 
 The bridge supports two types of connections:
 
-1. **LAPLACE Chat** - Connects with the special protocol `laplace-chat-bridge-role-server` and broadcasts messages to all clients
+1. **LAPLACE Chat** - Connects with the special protocol `laplace-event-bridge-role-server` and broadcasts messages to all clients
 2. **Clients** - Regular connections that receive broadcasts from the server
 
 ### Authentication
 
 When authentication is enabled, clients must provide the auth token in the WebSocket protocol:
 
-- For clients: `['laplace-chat-bridge-role-client', 'your-auth-token']`
+- For clients: `['laplace-event-bridge-role-client', 'your-auth-token']`
 
 ### Message Flow
 
@@ -83,7 +83,7 @@ A simple HTML client demo is included for testing (`client-demo.html`):
 1. Open the file in your web browser
 2. Configure connection settings (URL, authentication)
 3. Connect to the bridge
-4. Receive broadcasts from the LAPLACE Chat server
+4. Receive broadcasts from the LAPLACE Chat
 
 ## License
 

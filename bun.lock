@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "laplace-chat-bridge",
+      "name": "laplace-event-bridge",
       "devDependencies": {
         "bun-types": "latest",
         "prettier": "^3.5.3",

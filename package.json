@@ -1,5 +1,5 @@
 {
-  "name": "laplace-chat-bridge",
+  "name": "laplace-event-bridge",
   "module": "index.ts",
   "type": "module",
   "scripts": {

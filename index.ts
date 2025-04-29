@@ -1,5 +1,5 @@
 // Get authentication token from environment variable
-const AUTH_TOKEN = process.env['LAPLACE_CHAT_BRIDGE_AUTH'] || ''
+const AUTH_TOKEN = process.env['LAPLACE_EVENT_BRIDGE_AUTH'] || ''
 
 interface Client {
   id: string
@@ -13,13 +13,13 @@ const server = Bun.serve<Client, {}>({
   port: 9696,
   fetch(req, server) {
     // Check if this is the laplace-chat server connecting
-    // Format: "laplace-chat-bridge-role-server, password123"
+    // Format: "laplace-event-bridge-role-server, password123"
     const protocol = req.headers.get('sec-websocket-protocol')
     const protocolParts = protocol ? protocol.split(',') : []
     const role = protocolParts[0]?.trim()
     const password = protocolParts[1]?.trim() // Password for verification
 
-    const isServer = role === 'laplace-chat-bridge-role-server'
+    const isServer = role === 'laplace-event-bridge-role-server'
 
     if (AUTH_TOKEN) {
       if (password !== AUTH_TOKEN) {
@@ -56,7 +56,7 @@ const server = Bun.serve<Client, {}>({
           type: 'established',
           clientId,
           isServer,
-          message: 'Connected to LAPLACE Chat bridge',
+          message: 'Connected to LAPLACE Event bridge',
         })
       )
     },
@@ -96,7 +96,7 @@ const server = Bun.serve<Client, {}>({
         // If the message is from the server, broadcast to all clients
         // If from a client, don't broadcast (or optionally can be enabled)
         if (isServer) {
-          console.log(`Broadcasting message from laplace-chat server to all clients`)
+          console.log(`Broadcasting message from laplace-chat to all clients`)
 
           // Broadcast to all clients except the server
           for (const [client, data] of clients.entries()) {
@@ -146,4 +146,4 @@ const server = Bun.serve<Client, {}>({
   },
 })
 
-console.log(`LAPLACE Chat Bridge running at http://${server.hostname}:${server.port}`)
+console.log(`LAPLACE Event Bridge running at http://${server.hostname}:${server.port}`)
