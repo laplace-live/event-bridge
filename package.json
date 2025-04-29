@@ -1,5 +1,7 @@
 {
-  "name": "laplace-event-bridge",
+  "name": "@laplace.live/event-bridge",
+  "description": "LAPLACE Event Bridge",
+  "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "scripts": {
