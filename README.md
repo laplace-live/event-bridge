@@ -14,7 +14,7 @@ A specialized WebSocket bridge server that connects LAPLACE Chat to clients.
 The event bridge enables various use cases:
 
 - Integrate user message events directly with Discord
-- Create custom danmakus layouts in your favorite frontend languages to display chat messages
+- Create custom chat layouts in your favorite frontend languages to display chat messages
 - Create custom interactions with chat messages in VTube Studio
 - Connect to streamer.bot, SAMMI, or other 3rd party services for advanced automation and integrations
 
