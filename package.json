@@ -5,7 +5,8 @@
   "description": "LAPLACE Event Bridge Monorepo",
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "dev:server": "bun run --cwd packages/server dev",
@@ -13,9 +14,11 @@
     "build:sdk": "bun run --cwd packages/sdk build",
     "build:all": "bun run build:sdk",
     "prepublish": "bun run build:all",
-    "publish:sdk": "bun run --cwd packages/sdk publish"
+    "publish:sdk": "bun run --cwd packages/sdk publish",
+    "dev:vue-demo": "bun run --cwd examples/vue-demo dev"
   },
   "devDependencies": {
+    "@laplace.live/event-types": "^2.0.4",
     "bun-types": "latest",
     "prettier": "^3.5.3"
   }
