@@ -19,7 +19,7 @@ This repository contains two packages:
 
 ## Requirements
 
-- [Bun](https://bun.sh/) v1.0.0 or higher
+- [Bun](https://bun.sh/) v1.2.0 or higher
 
 ## Installation
 
