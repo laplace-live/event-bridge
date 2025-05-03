@@ -1,6 +1,6 @@
 # LAPLACE Event Bridge
 
-A specialized WebSocket bridge connecting LAPLACE Chat to clients, organized as a monorepo.
+A WebSocket bridge connecting LAPLACE Chat to clients
 
 ## Monorepo Structure
 
