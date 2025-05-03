@@ -1,5 +1,13 @@
 import type { LaplaceEvent, LaplaceEventTypes } from '@laplace.live/event-types'
 
+// Connection state enum to represent the current state of the connection
+export enum ConnectionState {
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  RECONNECTING = 'reconnecting',
+}
+
 // Create a conditional type that maps from event type string to event object type
 export type EventTypeMap = {
   [K in LaplaceEventTypes]: Extract<LaplaceEvent, { type: K }>
@@ -8,6 +16,7 @@ export type EventTypeMap = {
 export type EventHandler<T extends LaplaceEvent> = (event: T) => void
 export type EventTypeHandler = (event: LaplaceEvent) => void
 export type AnyEventHandler = (event: LaplaceEvent) => void
+export type ConnectionStateChangeHandler = (state: ConnectionState) => void
 
 export interface ConnectionOptions {
   /**
@@ -42,10 +51,11 @@ export class LaplaceEventBridgeClient {
   private ws: WebSocket | null = null
   private eventHandlers = new Map<string, EventHandler<any>[]>()
   private anyEventHandlers: AnyEventHandler[] = []
+  private connectionStateHandlers: ConnectionStateChangeHandler[] = []
   private reconnectTimer: number | null = null
   private reconnectAttempts = 0
   private clientId: string | null = null
-  private isConnected = false
+  private connectionState: ConnectionState = ConnectionState.DISCONNECTED
 
   private options: Required<ConnectionOptions> = {
     url: 'ws://localhost:9696',
@@ -70,6 +80,8 @@ export class LaplaceEventBridgeClient {
           this.ws.close()
         }
 
+        this.setConnectionState(ConnectionState.CONNECTING)
+
         const protocols: string[] = []
         if (this.options.token) {
           // Add the token as the second protocol parameter
@@ -79,7 +91,7 @@ export class LaplaceEventBridgeClient {
         this.ws = new WebSocket(this.options.url, protocols)
 
         this.ws.onopen = () => {
-          this.isConnected = true
+          this.setConnectionState(ConnectionState.CONNECTED)
           this.reconnectAttempts = 0
           console.log('Connected to LAPLACE Event Bridge')
           resolve()
@@ -108,20 +120,23 @@ export class LaplaceEventBridgeClient {
         }
 
         this.ws.onclose = () => {
-          this.isConnected = false
           console.log('Disconnected from LAPLACE Event Bridge')
 
           if (this.options.reconnect && this.reconnectAttempts < this.options.maxReconnectAttempts) {
             this.reconnectAttempts++
+            this.setConnectionState(ConnectionState.RECONNECTING)
             console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.options.maxReconnectAttempts})...`)
             this.reconnectTimer = setTimeout(() => {
               this.connect().catch(err => {
                 console.error('Reconnection failed:', err)
               })
             }, this.options.reconnectInterval) as unknown as number
+          } else {
+            this.setConnectionState(ConnectionState.DISCONNECTED)
           }
         }
       } catch (err) {
+        this.setConnectionState(ConnectionState.DISCONNECTED)
         reject(err)
       }
     })
@@ -141,7 +156,7 @@ export class LaplaceEventBridgeClient {
       this.ws = null
     }
 
-    this.isConnected = false
+    this.setConnectionState(ConnectionState.DISCONNECTED)
     this.clientId = null
   }
 
@@ -163,6 +178,16 @@ export class LaplaceEventBridgeClient {
    */
   public onAny(handler: AnyEventHandler): void {
     this.anyEventHandlers.push(handler)
+  }
+
+  /**
+   * Register a handler for connection state changes
+   * @param handler The handler function to call when the connection state changes
+   */
+  public onConnectionStateChange(handler: ConnectionStateChangeHandler): void {
+    this.connectionStateHandlers.push(handler)
+    // Immediately call with current state to initialize
+    handler(this.connectionState)
   }
 
   /**
@@ -199,10 +224,29 @@ export class LaplaceEventBridgeClient {
   }
 
   /**
+   * Remove a connection state change handler
+   * @param handler The handler function to remove
+   */
+  public offConnectionStateChange(handler: ConnectionStateChangeHandler): void {
+    const index = this.connectionStateHandlers.indexOf(handler)
+    if (index !== -1) {
+      this.connectionStateHandlers.splice(index, 1)
+    }
+  }
+
+  /**
    * Check if the client is connected to the bridge
+   * @deprecated Use getConnectionState() instead for more detailed state information
    */
   public isConnectedToBridge(): boolean {
-    return this.isConnected
+    return this.connectionState === ConnectionState.CONNECTED
+  }
+
+  /**
+   * Get the current connection state
+   */
+  public getConnectionState(): ConnectionState {
+    return this.connectionState
   }
 
   /**
@@ -222,6 +266,20 @@ export class LaplaceEventBridgeClient {
     }
 
     this.ws.send(JSON.stringify(event))
+  }
+
+  private setConnectionState(state: ConnectionState): void {
+    if (this.connectionState !== state) {
+      this.connectionState = state
+      // Notify all connection state change handlers
+      for (const handler of this.connectionStateHandlers) {
+        try {
+          handler(state)
+        } catch (err) {
+          console.error('Error in connection state change handler:', err)
+        }
+      }
+    }
   }
 
   private processEvent(event: LaplaceEvent): void {
