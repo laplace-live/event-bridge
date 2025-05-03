@@ -8,6 +8,7 @@ This repository contains two packages:
 
 - **Server** (`packages/server`): WebSocket server that routes events between LAPLACE Chat and clients
 - **SDK** (`packages/sdk`): TypeScript/JavaScript client for connecting to the bridge
+- **Examples** (`examples/`): Examples of how to use the SDK
 
 ## Features
 
