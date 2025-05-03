@@ -15,7 +15,8 @@
     "build:all": "bun run build:sdk",
     "prepublish": "bun run build:all",
     "publish:sdk": "bun run --cwd packages/sdk publish",
-    "dev:vue-demo": "bun run --cwd examples/vue-demo dev"
+    "dev:vue-demo": "bun run --cwd examples/vue-demo dev",
+    "cli:demo": "bun run --cwd examples/cli-demo start"
   },
   "devDependencies": {
     "@laplace.live/event-types": "^2.0.4",

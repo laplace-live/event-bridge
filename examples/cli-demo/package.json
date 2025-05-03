@@ -1,0 +1,22 @@
+{
+  "name": "cli-demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "event-bridge-cli": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun src/index.ts",
+    "dev": "bun --watch src/index.ts"
+  },
+  "dependencies": {
+    "@laplace.live/event-bridge-sdk": "workspace:*",
+    "@laplace.live/event-types": "^2.0.4",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
