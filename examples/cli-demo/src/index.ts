@@ -2,7 +2,6 @@
 import { program } from 'commander'
 import chalk from 'chalk'
 import { LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
-import type { Message } from '@laplace.live/event-types'
 
 // Define version and description
 program.name('event-bridge-cli').description('CLI for LAPLACE Event Bridge').version('0.1.0')
@@ -25,7 +24,7 @@ const getTimestamp = (): string => {
 }
 
 console.log(chalk.blue('LAPLACE Event Bridge CLI'))
-console.log(chalk.blue('======================'))
+console.log(chalk.blue('========================'))
 console.log(chalk.yellow('Connecting to:'), options.url)
 
 // Initialize the client
@@ -37,7 +36,7 @@ const client = new LaplaceEventBridgeClient({
 })
 
 // Setup event listeners
-client.on('message', (event: Message) => {
+client.on('message', event => {
   console.log(`${getTimestamp()} ${chalk.green(event.username)}: ${event.message}`)
 })
 

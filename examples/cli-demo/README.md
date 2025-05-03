@@ -74,15 +74,13 @@ const client = new LaplaceEventBridgeClient({
   reconnect: options.reconnect,
   reconnectInterval: parseInt(options.interval),
   maxReconnectAttempts: parseInt(options.attempts),
-});
+})
 
 // Setup event listeners
-client.on('message', (event: Message) => {
-  console.log(
-    `${getTimestamp()} ${chalk.green(event.username)}: ${event.message}`
-  );
-});
+client.on('message', event => {
+  console.log(`${getTimestamp()} ${chalk.green(event.username)}: ${event.message}`)
+})
 
 // Connect to the event bridge
-await client.connect();
+await client.connect()
 ```

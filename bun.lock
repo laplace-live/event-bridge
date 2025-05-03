@@ -17,7 +17,6 @@
       },
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
-        "@laplace.live/event-types": "^2.0.4",
         "chalk": "^5.3.0",
         "commander": "^11.1.0",
       },
