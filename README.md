@@ -1,22 +1,20 @@
 # LAPLACE Event Bridge
 
-A specialized WebSocket bridge server that connects LAPLACE Chat to clients.
+A specialized WebSocket bridge connecting LAPLACE Chat to clients, organized as a monorepo.
+
+## Monorepo Structure
+
+This repository contains two packages:
+
+- **Server** (`packages/server`): WebSocket server that routes events between LAPLACE Chat and clients
+- **SDK** (`packages/sdk`): TypeScript/JavaScript client for connecting to the bridge
 
 ## Features
 
-- Acts as a bridge between LAPLACE Chat and clients
+- Role-based connection system (server/client)
 - Server-to-clients message broadcasting
-- Role-based connection system
 - Token-based authentication
-
-## Use Cases
-
-The event bridge enables various use cases:
-
-- Integrate user message events directly with Discord
-- Create custom chat layouts in your favorite frontend languages to display chat messages
-- Create custom interactions with chat messages in VTube Studio
-- Connect to streamer.bot, SAMMI, or other 3rd party services for advanced automation and integrations
+- Reconnection support
 
 ## Requirements
 
@@ -29,61 +27,73 @@ The event bridge enables various use cases:
 git clone https://github.com/laplace-live/event-bridge
 cd event-bridge
 
-# Install dependencies
+# Install dependencies for all packages
 bun install
 ```
 
-## Configuration
+## Server Package
 
-The bridge supports authentication via an environment variable:
+### Configuration
+
+Set authentication via environment variable:
 
 ```bash
-# Set authentication token (optional but recommended)
 export LAPLACE_EVENT_BRIDGE_AUTH="your-secure-token"
 ```
 
-If the authentication token is set, all connections including the clients must provide it to connect.
-
-## Usage
-
-### Start the Bridge Server
+### Usage
 
 ```bash
-# Start the server
-bun run start
+# Start the server in development mode
+bun run dev:server
 
-# Or with hot reloading during development
-bun run dev
+# Start the server in production mode
+bun run start:server
 ```
 
-The WebSocket bridge server runs on `http://localhost:9696`.
+The server runs on `http://localhost:9696`.
 
-### Connection Types
+## SDK Package
 
-The bridge supports two types of connections:
+The SDK provides a client for connecting to the event bridge.
 
-1. **LAPLACE Chat** - Connects with the special protocol `laplace-event-bridge-role-server` and broadcasts messages to all clients
-2. **Clients** - Regular connections that receive broadcasts from the server
+### Installation
 
-### Authentication
+```bash
+# Install from npm
+bun add @laplace.live/event-bridge-sdk
+```
 
-When authentication is enabled, clients must provide the auth token in the WebSocket protocol:
+### Usage
 
-- For clients: `['laplace-event-bridge-role-client', 'your-auth-token']`
+```typescript
+import { LaplaceEventClient } from '@laplace.live/event-bridge-sdk'
 
-### Message Flow
+const client = new LaplaceEventClient({
+  url: 'ws://localhost:9696',
+  token: 'your-auth-token', // If auth is enabled
+})
 
-- Messages from the LAPLACE Chat are broadcast to all connected clients
-- Messages from clients are acknowledged but not relayed to other clients or the server
+// Connect to the bridge
+await client.connect()
 
-## Client Demo
+// Listen for specific events
+client.on('message', event => {
+  console.log('Received message:', event)
+})
 
-A simple HTML client demo is included for testing (`client-demo.html`):
+// Listen for all events
+client.onAny(event => {
+  console.log('Received event:', event.type)
+})
+```
 
-1. Open the file in your web browser
-2. Configure connection settings (URL, authentication)
-3. Connect to the bridge
-4. Receive broadcasts from the LAPLACE Chat
+## Use Cases
+
+- Integrate with Discord, OBS, VTube Studio
+- Create custom chat layouts in your preferred frontend
+- Connect to 3rd party services like streamer.bot or SAMMI
+- ...any other use case you can think of
 
 ## License
 

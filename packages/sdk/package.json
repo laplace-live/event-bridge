@@ -1,0 +1,33 @@
+{
+  "name": "@laplace.live/event-bridge-sdk",
+  "description": "LAPLACE Event Bridge SDK",
+  "version": "0.0.7",
+  "module": "index.ts",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "bun build index.ts --outdir dist --target browser --minify",
+    "publish": "bun run build && bun publish"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./index.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "index.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@laplace.live/event-types": "^2.0.4"
+  },
+  "peerDependencies": {
+    "@laplace.live/event-types": "^2.0.4"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}

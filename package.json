@@ -1,12 +1,19 @@
 {
   "name": "@laplace.live/event-bridge",
-  "description": "LAPLACE Event Bridge",
-  "version": "0.0.1",
-  "module": "index.ts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LAPLACE Event Bridge Monorepo",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "start": "bun run index.ts",
-    "dev": "bun --hot run index.ts"
+    "dev:server": "bun run --cwd packages/server dev",
+    "start:server": "bun run --cwd packages/server start",
+    "build:sdk": "bun run --cwd packages/sdk build",
+    "build:all": "bun run build:sdk",
+    "prepublish": "bun run build:all",
+    "publish:sdk": "bun run --cwd packages/sdk publish"
   },
   "devDependencies": {
     "bun-types": "latest",
