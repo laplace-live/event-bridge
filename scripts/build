@@ -1,0 +1,6 @@
+#! /bin/bash
+
+bun build --compile --minify --sourcemap --bytecode ./index.ts --compile --outfile dist/leb-darwin-arm64
+bun build --compile --minify --sourcemap --bytecode --target=bun-linux-x64-modern ./index.ts --outfile dist/leb-linux-x64
+bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 ./index.ts --outfile dist/bun-linux-arm64
+bun build --compile --minify --sourcemap --bytecode --target=bun-windows-x64-modern ./index.ts --outfile dist/bun-windows-x64
