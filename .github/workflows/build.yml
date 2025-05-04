@@ -2,9 +2,9 @@ name: Build Server Binaries
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
   release:
     types: [created]
 
@@ -47,7 +47,7 @@ jobs:
           bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 ./index.ts --outfile dist/leb-linux-arm64
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: packages/server/dist/leb-*
@@ -83,7 +83,7 @@ jobs:
           bun build --compile --minify --sourcemap --bytecode --target=bun-windows-x64-modern ./index.ts --outfile dist/leb-windows-x64.exe
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-binaries
           path: packages/server/dist/leb-windows-x64.exe
