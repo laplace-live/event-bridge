@@ -1,0 +1,38 @@
+{
+	"name": "svelte-demo",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"format": "prettier --write .",
+		"lint": "prettier --check . && eslint ."
+	},
+	"devDependencies": {
+		"@eslint/compat": "^1.2.9",
+		"@eslint/js": "^9.26.0",
+		"@sveltejs/adapter-auto": "^6.0.0",
+		"@sveltejs/kit": "^2.20.8",
+		"@sveltejs/vite-plugin-svelte": "^5.0.3",
+		"eslint": "^9.26.0",
+		"eslint-config-prettier": "^10.1.2",
+		"eslint-plugin-svelte": "^3.5.1",
+		"globals": "^16.0.0",
+		"prettier": "^3.5.3",
+		"prettier-plugin-svelte": "^3.3.3",
+		"svelte": "^5.28.2",
+		"svelte-check": "^4.1.7",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.31.1",
+		"vite": "^6.3.4"
+	},
+	"dependencies": {
+		"@laplace.live/event-bridge-sdk": "workspace:*",
+		"@laplace.live/event-types": "^2.0.4"
+	}
+}
