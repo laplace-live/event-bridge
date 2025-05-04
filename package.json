@@ -9,6 +9,7 @@
     "examples/*"
   ],
   "scripts": {
+    "changeset": "changeset",
     "dev:server": "bun run --cwd packages/server dev",
     "start:server": "bun run --cwd packages/server start",
     "build:sdk": "bun run --cwd packages/sdk build",
@@ -19,6 +20,7 @@
     "cli:demo": "bun run --cwd examples/cli-demo start"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.2",
     "@laplace.live/event-types": "^2.0.4",
     "bun-types": "latest",
     "prettier": "^3.5.3"

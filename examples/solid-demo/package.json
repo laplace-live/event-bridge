@@ -1,6 +1,8 @@
 {
-  "name": "example-basic",
+  "name": "solid-demo",
+  "version": "0.0.0",
   "type": "module",
+  "private": true,
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
