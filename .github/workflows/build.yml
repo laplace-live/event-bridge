@@ -1,0 +1,98 @@
+name: Build Server Binaries
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [created]
+
+jobs:
+  build-unix:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: linux-binaries
+          - os: macos-latest
+            artifact_name: darwin-binaries
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build on macOS
+        if: matrix.os == 'macos-latest'
+        working-directory: packages/server
+        run: |
+          mkdir -p dist
+          bun build --compile --minify --sourcemap --bytecode ./index.ts --compile --outfile dist/leb-darwin-arm64
+
+      - name: Build on Linux
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: packages/server
+        run: |
+          mkdir -p dist
+          bun build --compile --minify --sourcemap --bytecode --target=bun-linux-x64-modern ./index.ts --outfile dist/leb-linux-x64
+          bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 ./index.ts --outfile dist/leb-linux-arm64
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: packages/server/dist/leb-*
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/server/dist/leb-*
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build Windows binary
+        working-directory: packages/server
+        run: |
+          mkdir -p dist
+          bun build --compile --minify --sourcemap --bytecode --target=bun-windows-x64-modern ./index.ts --outfile dist/leb-windows-x64.exe
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-binaries
+          path: packages/server/dist/leb-windows-x64.exe
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/server/dist/leb-windows-x64.exe
+          tag: ${{ github.ref }}
+          overwrite: true
