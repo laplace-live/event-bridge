@@ -6,8 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "bun build index.ts --outdir dist --target browser --minify",
-    "publish": "bun run build && bun publish"
+    "build": "bun build index.ts --outdir dist --target browser --minify"
   },
   "exports": {
     ".": {
