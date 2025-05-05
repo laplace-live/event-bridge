@@ -146,4 +146,13 @@ const server = Bun.serve<Client, {}>({
   },
 })
 
-console.log(`LAPLACE Event Bridge running at http://${server.hostname}:${server.port}`)
+// Create a banner display at startup
+function displayBanner() {
+  console.log('🌸 LAPLACE Event Bridge Server')
+  console.log(`🚀 Server running at http://${server.hostname}:${server.port}`)
+  console.log(`🔐 Authentication: ${AUTH_TOKEN ? 'Enabled' : 'Disabled'}`)
+  console.log(`⏱️ Started at: ${new Date().toLocaleString()}`)
+  console.log(`\nWaiting for connections...\n`)
+}
+
+displayBanner()
