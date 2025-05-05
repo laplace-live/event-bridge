@@ -1,3 +1,5 @@
+import type { LaplaceEvent } from '@laplace.live/event-types'
+
 // Get authentication token from environment variable
 const AUTH_TOKEN = process.env['LAPLACE_EVENT_BRIDGE_AUTH'] || ''
 
@@ -66,13 +68,13 @@ const server = Bun.serve<Client, {}>({
 
       try {
         const messageStr = message.toString()
-        let parsedMessage
+        let parsedMessage: LaplaceEvent
         let broadcastMessage
 
         try {
           // Try to parse as JSON
           parsedMessage = JSON.parse(messageStr)
-          console.log(`Received event from ${clientId}:`, parsedMessage)
+          console.log(`Received ${parsedMessage.type} from ${clientId}:`, parsedMessage)
 
           // Prepare broadcast message in the same format
           broadcastMessage = JSON.stringify({
