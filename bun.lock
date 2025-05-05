@@ -4,7 +4,7 @@
     "": {
       "name": "laplace-event-bridge",
       "devDependencies": {
-        "@changesets/cli": "^2.29.2",
+        "@changesets/cli": "^2.29.3",
         "@laplace.live/event-types": "^2.0.4",
         "bun-types": "latest",
         "prettier": "^3.5.3",
