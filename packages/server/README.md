@@ -35,14 +35,37 @@ bun install
 
 ## Configuration
 
-The bridge supports authentication via an environment variable:
+### Authentication
+
+You can set authentication in order of precedence:
+
+1. Environment variable: `LEB_AUTH="your-secure-token"`
+2. Command line: `--auth "your-secure-token"`
 
 ```bash
-# Set authentication token (optional but recommended)
-export LAPLACE_EVENT_BRIDGE_AUTH="your-secure-token"
+# Example using environment variable
+export LEB_AUTH="your-secure-token"
+
+# Example using CLI
+bun run start --auth "your-secure-token"
 ```
 
 If the authentication token is set, all connections including the clients must provide it to connect.
+
+### Debug Mode
+
+Enable detailed debug logging using:
+
+1. Environment variable: `DEBUG=1` or `DEBUG=true`
+2. Command line: `--debug`
+
+```bash
+# Enable debug mode using environment variable
+export DEBUG=1
+
+# Enable debug mode using CLI
+bun run start --debug
+```
 
 ## Usage
 
@@ -51,6 +74,9 @@ If the authentication token is set, all connections including the clients must p
 ```bash
 # Start the server
 bun run start
+
+# Start with CLI options
+bun run start --debug --auth "your-secure-token"
 
 # Or with hot reloading during development
 bun run dev

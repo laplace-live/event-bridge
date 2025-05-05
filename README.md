@@ -36,11 +36,21 @@ bun install
 
 ### Configuration
 
-Set authentication via environment variable:
+There are multiple ways to configure the server:
 
-```bash
-export LAPLACE_EVENT_BRIDGE_AUTH="your-secure-token"
-```
+#### Authentication
+
+You can set authentication in order of precedence:
+
+1. Environment variable: `LEB_AUTH="your-secure-token"`
+2. Command line: `--auth "your-secure-token"`
+
+#### Debug Mode
+
+Enable detailed debug logging using:
+
+1. Environment variable: `DEBUG=1` or `DEBUG=true`
+2. Command line: `--debug`
 
 ### Usage
 
@@ -50,6 +60,9 @@ bun run dev:server
 
 # Start the server in production mode
 bun run start:server
+
+# Start with CLI options
+bun run start:server --debug --auth "your-secure-token"
 ```
 
 The server runs on `http://localhost:9696`.

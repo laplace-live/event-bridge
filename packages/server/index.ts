@@ -1,7 +1,25 @@
+import { parseArgs } from 'util'
 import type { LaplaceEvent } from '@laplace.live/event-types'
 
-// Get authentication token from environment variable
-const AUTH_TOKEN = process.env['LAPLACE_EVENT_BRIDGE_AUTH'] || ''
+// Parse command line arguments properly
+const { values } = parseArgs({
+  args: Bun.argv,
+  options: {
+    debug: {
+      type: 'boolean',
+    },
+    auth: {
+      type: 'string',
+    },
+  },
+  strict: false,
+})
+
+// Get authentication token from environment variable or CLI
+const AUTH_TOKEN = process.env['LEB_AUTH'] || process.env['LAPLACE_EVENT_BRIDGE_AUTH'] || values.auth || ''
+
+// Debug mode configuration
+const DEBUG_MODE = process.env['DEBUG'] === '1' || process.env['DEBUG']?.toLowerCase() === 'true' || values.debug
 
 interface Client {
   id: string
@@ -74,7 +92,12 @@ const server = Bun.serve<Client, {}>({
         try {
           // Try to parse as JSON
           parsedMessage = JSON.parse(messageStr)
-          console.log(`Received ${parsedMessage.type} from ${clientId}:`, parsedMessage)
+
+          if (DEBUG_MODE) {
+            console.log(`Received ${parsedMessage.type} from ${clientId}:`, parsedMessage)
+          } else {
+            console.log(`Received ${parsedMessage.type} from ${clientId}`)
+          }
 
           // Prepare broadcast message in the same format
           broadcastMessage = JSON.stringify({
@@ -98,7 +121,7 @@ const server = Bun.serve<Client, {}>({
         // If the message is from the server, broadcast to all clients
         // If from a client, don't broadcast (or optionally can be enabled)
         if (isServer) {
-          console.log(`Broadcasting message from laplace-chat to all clients`)
+          // console.log(`Broadcasting message from laplace-chat to all clients`)
 
           // Broadcast to all clients except the server
           for (const [client, data] of clients.entries()) {
@@ -152,7 +175,8 @@ const server = Bun.serve<Client, {}>({
 function displayBanner() {
   console.log('🌸 LAPLACE Event Bridge Server')
   console.log(`🚀 Server running at http://${server.hostname}:${server.port}`)
-  console.log(`🔐 Authentication: ${AUTH_TOKEN ? 'Enabled' : 'Disabled'}`)
+  console.log(`🔐 Authentication: ${AUTH_TOKEN ? '✅ Enabled' : '❌ Disabled'}`)
+  console.log(`🐛 Debug Mode: ${DEBUG_MODE ? '✅ Enabled' : '❌ Disabled'}`)
   console.log(`⏱️ Started at: ${new Date().toLocaleString()}`)
   console.log(`\nWaiting for connections...\n`)
 }
