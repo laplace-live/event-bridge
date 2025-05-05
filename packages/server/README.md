@@ -54,6 +54,23 @@ bun run start --auth "your-secure-token"
 
 If the authentication token is set, all connections including the clients must provide it to connect.
 
+### Network Interface
+
+Control which network interface the server listens on:
+
+1. Environment variable: `HOST="127.0.0.1"`
+2. Command line: `--host 127.0.0.1`
+
+```bash
+# Listen only on localhost
+export HOST="localhost"
+
+# Listen on all interfaces
+bun run start --host 0.0.0.0
+```
+
+By default, the server listens on `localhost`.
+
 ### Debug Mode
 
 Enable detailed debug logging using:
@@ -78,13 +95,13 @@ bun run start --debug
 bun run start
 
 # Start with CLI options
-bun run start --debug --auth "your-secure-token"
+bun run start --debug --auth "your-secure-token" --host 0.0.0.0
 
 # Or with hot reloading during development
 bun run dev
 ```
 
-The WebSocket bridge server runs on `http://localhost:9696`.
+The WebSocket bridge server runs on `http://localhost:9696` by default.
 
 ### Connection Types
 

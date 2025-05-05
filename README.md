@@ -45,6 +45,15 @@ You can set authentication in order of precedence:
 1. Environment variable: `LEB_AUTH="your-secure-token"`
 2. Command line: `--auth "your-secure-token"`
 
+#### Network Interface
+
+Control which network interface the server listens on:
+
+1. Environment variable: `HOST="127.0.0.1"`
+2. Command line: `--host 127.0.0.1`
+
+By default, the server listens on `localhost`.
+
 #### Debug Mode
 
 Enable detailed debug logging using:
@@ -62,10 +71,10 @@ bun run dev:server
 bun run start:server
 
 # Start with CLI options
-bun run start:server --debug --auth "your-secure-token"
+bun run start:server --debug --auth "your-secure-token" --host 0.0.0.0
 ```
 
-The server runs on `http://localhost:9696`.
+The server runs on `http://localhost:9696` by default.
 
 ## SDK Package
 

@@ -11,6 +11,9 @@ const { values } = parseArgs({
     auth: {
       type: 'string',
     },
+    host: {
+      type: 'string',
+    },
   },
   strict: false,
 })
@@ -19,7 +22,10 @@ const { values } = parseArgs({
 const AUTH_TOKEN = process.env['LEB_AUTH'] || process.env['LAPLACE_EVENT_BRIDGE_AUTH'] || values.auth || ''
 
 // Debug mode configuration
-const DEBUG_MODE = process.env['DEBUG'] === '1' || process.env['DEBUG']?.toLowerCase() === 'true' || values.debug
+const DEBUG_MODE = process.env['DEBUG'] === '1' || process.env['DEBUG']?.toLowerCase() === 'true' || !!values.debug
+
+// Network interface configuration
+const HOST = process.env['HOST'] || (values.host as string) || 'localhost'
 
 interface Client {
   id: string
@@ -31,6 +37,7 @@ let nextClientId = 1
 
 const server = Bun.serve<Client, {}>({
   port: 9696,
+  hostname: HOST,
   fetch(req, server) {
     // Check if this is the laplace-chat server connecting
     // Format: "laplace-event-bridge-role-server, password123"
