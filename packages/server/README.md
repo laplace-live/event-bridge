@@ -24,6 +24,8 @@ The event bridge enables various use cases:
 
 ## Installation
 
+### From Source
+
 ```bash
 # Clone the repository
 git clone https://github.com/laplace-live/event-bridge

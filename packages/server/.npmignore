@@ -1,0 +1,16 @@
+# Source code
+*.ts
+!*.d.ts
+
+# Config files
+tsconfig.json
+.DS_Store
+
+# Scripts
+scripts/
+
+# Development files
+client-demo.html
+
+# Build output
+dist/

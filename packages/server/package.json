@@ -2,17 +2,22 @@
   "name": "@laplace.live/event-bridge-server",
   "description": "LAPLACE Event Bridge Server",
   "version": "0.2.0",
-  "module": "index.ts",
   "license": "AGPL-3.0",
   "type": "module",
+  "module": "index.ts",
+  "main": "index.ts",
+  "types": "index.ts",
   "scripts": {
     "start": "bun run index.ts",
-    "dev": "bun --hot run index.ts"
+    "dev": "bun --hot run index.ts",
+    "build": "bun build ./index.ts --outdir ./dist --target node --minify --sourcemap",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@laplace.live/event-types": "^2.0.4"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
   }
 }
