@@ -1,5 +1,12 @@
 # @laplace.live/event-bridge-server
 
+## 0.2.1
+
+### Patch Changes
+
+- 818636b: enhance configuration options for authentication and debug mode
+- 6fbc787: add network interface configuration options
+
 ## 0.2.0
 
 ### Minor Changes
