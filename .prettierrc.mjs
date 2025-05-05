@@ -10,5 +10,36 @@ export default {
   quoteProps: 'consistent',
   jsxSingleQuote: true,
   arrowParens: "avoid",
-  endOfLine: "lf"
+  endOfLine: "lf",
+  plugins: ["@ianvs/prettier-plugin-sort-imports"],
+
+  // @ianvs/prettier-plugin-sort-imports
+  // https://github.com/IanVS/prettier-plugin-sort-imports
+  importOrder: [
+    '<BUILTIN_MODULES>',
+    '^react$',
+    '^next(\/.*)?',
+    '<THIRD_PARTY_MODULES>',
+    '@(?=[^\/]).*',
+    '',
+    '^@/types(.*)$',
+    '',
+    '^@/const(.*)$',
+    '',
+    '^@/lib(.*)$',
+    '',
+    '^@/utils(.*)$',
+    '',
+    '^@/hooks(.*)$',
+    '',
+    '^@/handlers(.*)$',
+    '',
+    '^@/components(.*)$',
+    '',
+    '^@/app(.*)$',
+    '',
+    '^@/pages(.*)$',
+    '',
+    '^[.]',
+  ]
 }
