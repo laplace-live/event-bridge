@@ -104,6 +104,15 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Bun cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+            */*/node_modules
+          key: ${{ runner.os }}-bun-cache
+
       - name: Install dependencies
         run: bun install
 
