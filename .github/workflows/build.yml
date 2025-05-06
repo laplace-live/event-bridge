@@ -7,6 +7,8 @@ on:
     branches: [master]
   release:
     types: [created]
+  repository_dispatch:
+    types: [release-created]
 
 jobs:
   build-unix:
@@ -22,6 +24,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.client_payload.ref || github.ref }}
+
+      - name: Get tag for upload
+        id: get_tag
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "Using v${{ github.event.client_payload.version }} for release tag"
+          echo "release_tag=v${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -52,7 +64,7 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: packages/server/dist/leb-*
 
-      - name: Upload to release
+      - name: Upload to GitHub release (standard release)
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
@@ -62,11 +74,32 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
 
+      - name: Upload to GitHub release (from dispatch)
+        if: github.event_name == 'repository_dispatch'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/server/dist/leb-*
+          file_glob: true
+          tag: ${{ steps.get_tag.outputs.release_tag }}
+          overwrite: true
+
   build-windows:
     runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.client_payload.ref || github.ref }}
+
+      - name: Get tag for upload
+        id: get_tag
+        if: github.event_name == 'repository_dispatch'
+        shell: bash
+        run: |
+          echo "Using v${{ github.event.client_payload.version }} for release tag"
+          echo "release_tag=v${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -88,11 +121,20 @@ jobs:
           name: windows-binaries
           path: packages/server/dist/leb-windows-x64.exe
 
-      - name: Upload to release
+      - name: Upload to GitHub release (standard release)
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: packages/server/dist/leb-windows-x64.exe
           tag: ${{ github.ref }}
+          overwrite: true
+
+      - name: Upload to GitHub release (from dispatch)
+        if: github.event_name == 'repository_dispatch'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: packages/server/dist/leb-windows-x64.exe
+          tag: ${{ steps.get_tag.outputs.release_tag }}
           overwrite: true

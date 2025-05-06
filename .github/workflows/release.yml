@@ -39,3 +39,45 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Check if server package was published
+        if: steps.changesets.outputs.published == 'true'
+        id: check_server
+        run: |
+          # Parse the published packages JSON
+          PUBLISHED_PACKAGES='${{ steps.changesets.outputs.publishedPackages }}'
+
+          # Debug output to see format
+          echo "Published packages: $PUBLISHED_PACKAGES"
+
+          # Check if @laplace.live/event-bridge-server is in the published packages
+          if echo "$PUBLISHED_PACKAGES" | grep -q "@laplace.live/event-bridge-server"; then
+            echo "Server package was published"
+            echo "server_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "Server package was not published"
+            echo "server_published=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Get the version of the server package if it was published
+          if echo "$PUBLISHED_PACKAGES" | grep -q "@laplace.live/event-bridge-server"; then
+            # Try different formats based on changesets output format
+            if echo "$PUBLISHED_PACKAGES" | jq -e . >/dev/null 2>&1; then
+              # JSON format
+              VERSION=$(echo "$PUBLISHED_PACKAGES" | jq -r '.[] | select(.name=="@laplace.live/event-bridge-server") | .version')
+            else
+              # String format
+              VERSION=$(echo "$PUBLISHED_PACKAGES" | grep -o '"@laplace.live/event-bridge-server":[^,}]*' | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+            fi
+
+            echo "Server version: $VERSION"
+            echo "server_version=$VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Build Workflow
+        if: steps.check_server.outputs.server_published == 'true'
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: release-created
+          client-payload: '{"ref": "${{ github.ref }}", "package": "@laplace.live/event-bridge-server", "version": "${{ steps.check_server.outputs.server_version }}"}'
