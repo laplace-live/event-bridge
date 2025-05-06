@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.1.3
+
+### Patch Changes
+
+- d88b2e8: artifact builds
+
 ## 0.1.2
 
 ### Patch Changes
