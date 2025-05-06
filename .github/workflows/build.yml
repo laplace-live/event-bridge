@@ -104,6 +104,7 @@ jobs:
         with:
           bun-version: latest
 
+      # NOTE: does not seems to work, runner on Windows is always slower than Linux
       - name: Setup Bun cache
         uses: actions/cache@v4
         with:
