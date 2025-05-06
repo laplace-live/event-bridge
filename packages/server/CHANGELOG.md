@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.2.3
+
+### Patch Changes
+
+- dc32524: artifact build
+
 ## 0.2.2
 
 ### Patch Changes
