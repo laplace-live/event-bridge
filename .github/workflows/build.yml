@@ -31,8 +31,8 @@ jobs:
         id: get_tag
         if: github.event_name == 'repository_dispatch'
         run: |
-          echo "Using v${{ github.event.client_payload.version }} for release tag"
-          echo "release_tag=v${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+          echo "Using tag: ${{ github.event.client_payload.tag }}"
+          echo "release_tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -96,8 +96,8 @@ jobs:
         if: github.event_name == 'repository_dispatch'
         shell: bash
         run: |
-          echo "Using v${{ github.event.client_payload.version }} for release tag"
-          echo "release_tag=v${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+          echo "Using tag: ${{ github.event.client_payload.tag }}"
+          echo "release_tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

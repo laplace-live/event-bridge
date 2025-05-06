@@ -72,6 +72,14 @@ jobs:
 
             echo "Server version: $VERSION"
             echo "server_version=$VERSION" >> $GITHUB_OUTPUT
+
+            # Full tag with package name
+            FULL_TAG="@laplace.live/event-bridge-server@$VERSION"
+            echo "server_tag=$FULL_TAG" >> $GITHUB_OUTPUT
+
+            # Simple version tag (e.g. v1.2.3)
+            SIMPLE_TAG="v$VERSION"
+            echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
           fi
 
       - name: Trigger Build Workflow
@@ -80,4 +88,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: release-created
-          client-payload: '{"ref": "${{ github.ref }}", "package": "@laplace.live/event-bridge-server", "version": "${{ steps.check_server.outputs.server_version }}"}'
+          client-payload: '{"package": "@laplace.live/event-bridge-server", "version": "${{ steps.check_server.outputs.server_version }}", "tag": "${{ steps.check_server.outputs.server_tag }}", "simple_tag": "${{ steps.check_server.outputs.simple_tag }}"}'
