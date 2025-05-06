@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.2.2
+
+### Patch Changes
+
+- 2ef27cf: release artifacts test
+
 ## 0.2.1
 
 ### Patch Changes
