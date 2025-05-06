@@ -120,4 +120,4 @@ client.onAny(event => {
 
 ## License
 
-AGPL
+AGPL and MIT
