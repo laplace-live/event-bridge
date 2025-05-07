@@ -84,7 +84,7 @@ jobs:
 
       - name: Trigger Build Workflow
         if: steps.check_server.outputs.server_published == 'true'
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: release-created
