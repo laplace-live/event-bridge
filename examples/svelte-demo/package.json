@@ -29,7 +29,7 @@
 		"svelte-check": "^4.1.7",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.32.0",
-		"vite": "^6.3.4"
+		"vite": "^6.3.5"
 	},
 	"dependencies": {
 		"@laplace.live/event-bridge-sdk": "workspace:*",
