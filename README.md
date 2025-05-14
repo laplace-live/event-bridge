@@ -111,6 +111,14 @@ client.onAny(event => {
 })
 ```
 
+## `LaplaceEvent`
+
+`LaplaceEvent` is the core type of the event bridge system, representing events exchanged between LAPLACE Chat and connected clients. Each event contains standardized data for various chat streams from Biliibli Live.
+
+All events share a common `type` field that identifies the event category and additional fields specific to each event type.
+
+You can read more about the event types in the [Event Types documentation](https://chat.laplace.live/event-types/).
+
 ## Use Cases
 
 - Integrate with Discord, OBS, VTube Studio
