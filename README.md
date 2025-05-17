@@ -90,9 +90,9 @@ bun add @laplace.live/event-bridge-sdk
 ### Usage
 
 ```typescript
-import { LaplaceEventClient } from '@laplace.live/event-bridge-sdk'
+import { LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
 
-const client = new LaplaceEventClient({
+const client = new LaplaceEventBridgeClient({
   url: 'ws://localhost:9696',
   token: 'your-auth-token', // If auth is enabled
 })
