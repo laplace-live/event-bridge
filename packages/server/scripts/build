@@ -1,6 +1,25 @@
-#! /bin/bash
+#! /usr/bin/env bash
 
-bun build --compile --minify --sourcemap --bytecode ./index.ts --compile --outfile dist/leb-darwin-arm64
-bun build --compile --minify --sourcemap --bytecode --target=bun-linux-x64-modern ./index.ts --outfile dist/leb-linux-x64
-bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 ./index.ts --outfile dist/bun-linux-arm64
-bun build --compile --minify --sourcemap --bytecode --target=bun-windows-x64-modern ./index.ts --outfile dist/bun-windows-x64
+# Build cross-platform binaries for LAPLACE Event Bridge server
+
+set -euo pipefail
+
+APP_NAME="leb-server"
+DIST_DIR="$(dirname "$0")/../dist"
+mkdir -p "$DIST_DIR"
+
+function build() {
+  local os=$1
+  local arch=$2
+  local ext=$3
+  echo "Building for ${os}/${arch}..."
+  GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build -o "${DIST_DIR}/${APP_NAME}-${os}-${arch}${ext}" ../
+}
+
+build darwin amd64 ""
+build darwin arm64 ""
+build linux amd64 ""
+build linux arm64 ""
+build windows amd64 ".exe"
+
+echo "All binaries are in $DIST_DIR"

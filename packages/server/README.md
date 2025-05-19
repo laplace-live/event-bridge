@@ -1,135 +1,58 @@
 # LAPLACE Event Bridge Server
 
-A specialized WebSocket bridge server that connects LAPLACE Chat to clients.
+This package provides a standalone Go implementation of the [LAPLACE Event Bridge](../server) that was originally written for Bun / Node.js.
 
 ## Features
 
-- Acts as a bridge between LAPLACE Chat and clients
-- Server-to-clients message broadcasting
-- Role-based connection system
-- Token-based authentication
+- Broadcast-driven WebSocket bridge identical to the original Bun implementation
+- Role-based connections (`laplace-event-bridge-role-server` vs clients)
+- Optional token-based authentication (env vars or CLI flags)
+- Rich debug logging controllable via `DEBUG` flag / env
+- Single, statically-linked binary (no external runtime); easy to deploy
+- Cross-compilation script for **macOS**, **Linux**, and **Windows** (`amd64` and `arm64`) architectures
 
-## Use Cases
-
-The event bridge enables various use cases:
-
-- Integrate user message events directly with Discord
-- Create custom chat layouts in your favorite frontend languages to display chat messages
-- Create custom interactions with chat messages in VTube Studio
-- Connect to streamer.bot, SAMMI, or other 3rd party services for advanced automation and integrations
-
-## Requirements
-
-- [Bun](https://bun.sh/) v1.0.0 or higher
-
-## Installation
-
-### From Source
+## Getting Started
 
 ```bash
-# Clone the repository
-git clone https://github.com/laplace-live/event-bridge
-cd event-bridge
+# Navigate to the package
+cd packages/server-go
 
-# Install dependencies
-bun install
+# Run in development
+go run . --debug
+
+# Or compile native binary for your platform
+go build -o leb-go
+./leb-go --auth "my-secret" --host 0.0.0.0
 ```
 
-## Configuration
+### Flags & Environment Variables
 
-### Authentication
+| Purpose              | Env var(s)                                | CLI flag         | Default     |
+| -------------------- | ----------------------------------------- | ---------------- | ----------- |
+| Enable debug output  | `DEBUG=1` or `DEBUG=true`                 | `--debug`        | disabled    |
+| Authentication token | `LEB_AUTH` or `LAPLACE_EVENT_BRIDGE_AUTH` | `--auth <token>` | none        |
+| Network interface    | `HOST`                                    | `--host <ip>`    | `localhost` |
+| Port                 | –                                         | `--port <port>`  | `9696`      |
 
-You can set authentication in order of precedence:
+## Cross-platform Build
 
-1. Environment variable: `LEB_AUTH="your-secure-token"`
-2. Command line: `--auth "your-secure-token"`
+A helper script is provided under `scripts/build`.
 
 ```bash
-# Example using environment variable
-export LEB_AUTH="your-secure-token"
-
-# Example using CLI
-bun run start --auth "your-secure-token"
+# From packages/server-go
+./scripts/build
 ```
 
-If the authentication token is set, all connections including the clients must provide it to connect.
+Resulting binaries will appear in `packages/server-go/dist` with names such as:
 
-### Network Interface
-
-Control which network interface the server listens on:
-
-1. Environment variable: `HOST="127.0.0.1"`
-2. Command line: `--host 127.0.0.1`
-
-```bash
-# Listen only on localhost
-export HOST="localhost"
-
-# Listen on all interfaces
-bun run start --host 0.0.0.0
+```
+leb-go-darwin-arm64
+leb-go-linux-amd64
+leb-go-windows-amd64.exe
 ```
 
-By default, the server listens on `localhost`.
-
-### Debug Mode
-
-Enable detailed debug logging using:
-
-1. Environment variable: `DEBUG=1` or `DEBUG=true`
-2. Command line: `--debug`
-
-```bash
-# Enable debug mode using environment variable
-export DEBUG=1
-
-# Enable debug mode using CLI
-bun run start --debug
-```
-
-## Usage
-
-### Start the Bridge Server
-
-```bash
-# Start the server
-bun run start
-
-# Start with CLI options
-bun run start --debug --auth "your-secure-token" --host 0.0.0.0
-
-# Or with hot reloading during development
-bun run dev
-```
-
-The WebSocket bridge server runs on `http://localhost:9696` by default.
-
-### Connection Types
-
-The bridge supports two types of connections:
-
-1. **LAPLACE Chat** - Connects with the special protocol `laplace-event-bridge-role-server` and broadcasts messages to all clients
-2. **Clients** - Regular connections that receive broadcasts from the server
-
-### Authentication
-
-When authentication is enabled, clients must provide the auth token in the WebSocket protocol:
-
-- For clients: `['laplace-event-bridge-role-client', 'your-auth-token']`
-
-### Message Flow
-
-- Messages from the LAPLACE Chat are broadcast to all connected clients
-- Messages from clients are acknowledged but not relayed to other clients or the server
-
-## Client Demo
-
-A simple HTML client demo is included for testing (`client-demo.html`):
-
-1. Open the file in your web browser
-2. Configure connection settings (URL, authentication)
-3. Connect to the bridge
-4. Receive broadcasts from the LAPLACE Chat
+These binaries are fully static (`CGO_ENABLED=0`) and have **no runtime dependencies** other than the standard C library on Windows.
 
 ## License
 
-AGPL
+AGPL-3.0

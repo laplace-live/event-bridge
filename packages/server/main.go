@@ -224,7 +224,7 @@ func numClients() int {
 }
 
 func banner(host string, port int, authEnabled, debug bool) {
-	fmt.Println("🌸 LAPLACE Event Bridge Server (Go edition)")
+	fmt.Println("🌸 LAPLACE Event Bridge Server")
 	fmt.Printf("🚀 Server running at http://%s:%d\n", host, port)
 	fmt.Printf("🔐 Authentication: %s\n", ternary(authEnabled, "✅ Enabled", "❌ Disabled"))
 	fmt.Printf("🐛 Debug Mode: %s\n", ternary(debug, "✅ Enabled", "❌ Disabled"))

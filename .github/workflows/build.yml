@@ -34,14 +34,6 @@ jobs:
           echo "Using tag: ${{ github.event.client_payload.tag }}"
           echo "release_tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -52,27 +44,12 @@ jobs:
         working-directory: packages/server
         run: |
           mkdir -p dist
-          bun build --compile --minify --sourcemap --bytecode ./index.ts --compile --outfile dist/leb-darwin-arm64
-
-      - name: Build Go on macOS
-        if: matrix.os == 'macos-latest'
-        working-directory: packages/server-go
-        run: |
-          mkdir -p dist
           go mod download
           GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-darwin-arm64
 
       - name: Build on Linux
         if: matrix.os == 'ubuntu-latest'
         working-directory: packages/server
-        run: |
-          mkdir -p dist
-          bun build --compile --minify --sourcemap --bytecode --target=bun-linux-x64-modern ./index.ts --outfile dist/leb-linux-x64
-          bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 ./index.ts --outfile dist/leb-linux-arm64
-
-      - name: Build Go on Linux
-        if: matrix.os == 'ubuntu-latest'
-        working-directory: packages/server-go
         run: |
           mkdir -p dist
           go mod download
@@ -85,7 +62,6 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: |
             packages/server/dist/leb-*
-            packages/server-go/dist/leb-*
 
       - name: Upload to GitHub release (standard release)
         if: github.event_name == 'release'
@@ -123,54 +99,14 @@ jobs:
           echo "Using tag: ${{ github.event.client_payload.tag }}"
           echo "release_tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Setup Go (for Windows build)
         uses: actions/setup-go@v5
         with:
           go-version: stable
 
-      # NOTE: does not seem to work, runner on Windows is always slower than Linux
-      - name: Setup Bun cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.bun/install/cache
-            node_modules
-            */*/node_modules
-          key: ${{ runner.os }}-bun-cache
-
-      - name: Install dependencies
-        run: bun install
-
       - name: Build Windows binary
-        working-directory: packages/server
-        run: |
-          mkdir -p dist
-          bun build --compile --minify --sourcemap --bytecode --target=bun-windows-x64-modern ./index.ts --outfile dist/leb-windows-x64.exe
-
-      # TODO: https://github.com/oven-sh/bun/issues/10574
-      # - name: Sign Windows binary with Trusted Signing
-      #   uses: azure/trusted-signing-action@v0
-      #   with:
-      #     azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      #     azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      #     azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-      #     endpoint: https://eus.codesigning.azure.net/
-      #     trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
-      #     certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE_NAME }}
-      #     files-folder: packages/server/dist
-      #     files-folder-filter: exe
-      #     file-digest: SHA256
-      #     timestamp-rfc3161: http://timestamp.acs.microsoft.com
-      #     timestamp-digest: SHA256
-
-      - name: Build Go Windows binary
         shell: bash
-        working-directory: packages/server-go
+        working-directory: packages/server
         run: |
           mkdir -p dist
           go mod download
@@ -185,7 +121,7 @@ jobs:
           endpoint: https://eus.codesigning.azure.net/
           trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
           certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE_NAME }}
-          files-folder: packages/server-go/dist
+          files-folder: packages/server/dist
           files-folder-filter: exe
           file-digest: SHA256
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
@@ -196,8 +132,7 @@ jobs:
         with:
           name: windows-binaries
           path: |
-            packages/server/dist/leb-windows-x64.exe
-            packages/server-go/dist/leb-server-windows-x64.exe
+            packages/server/dist/leb-server-windows-x64.exe
 
       - name: Upload to GitHub release (standard release)
         if: github.event_name == 'release'
