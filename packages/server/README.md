@@ -46,9 +46,9 @@ A helper script is provided under `scripts/build`.
 Resulting binaries will appear in `packages/server-go/dist` with names such as:
 
 ```
-leb-go-darwin-arm64
-leb-go-linux-amd64
-leb-go-windows-amd64.exe
+leb-server-darwin-arm64
+leb-server-linux-amd64
+leb-server-windows-amd64.exe
 ```
 
 These binaries are fully static (`CGO_ENABLED=0`) and have **no runtime dependencies** other than the standard C library on Windows.
