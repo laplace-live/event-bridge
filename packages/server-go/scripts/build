@@ -1,0 +1,25 @@
+#! /usr/bin/env bash
+
+# Build cross-platform binaries for LAPLACE Event Bridge server
+
+set -euo pipefail
+
+APP_NAME="leb-server"
+DIST_DIR="$(dirname "$0")/../dist"
+mkdir -p "$DIST_DIR"
+
+function build() {
+  local os=$1
+  local arch=$2
+  local ext=$3
+  echo "Building for ${os}/${arch}..."
+  GOOS=$os GOARCH=$arch CGO_ENABLED=0 go build -o "${DIST_DIR}/${APP_NAME}-${os}-${arch}${ext}" ../
+}
+
+build darwin amd64 ""
+build darwin arm64 ""
+build linux amd64 ""
+build linux arm64 ""
+build windows amd64 ".exe"
+
+echo "All binaries are in $DIST_DIR"
