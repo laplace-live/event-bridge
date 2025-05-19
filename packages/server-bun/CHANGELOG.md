@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.2.5
+
+### Patch Changes
+
+- 63c49ce: missing windows build
+
 ## 0.2.4
 
 ### Patch Changes
