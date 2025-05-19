@@ -140,6 +140,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: packages/**/dist/leb-*
+          file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -149,5 +150,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: packages/**/dist/leb-*
+          file_glob: true
           tag: ${{ steps.get_tag.outputs.release_tag }}
           overwrite: true
