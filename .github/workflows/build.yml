@@ -42,12 +42,25 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
       - name: Build on macOS
         if: matrix.os == 'macos-latest'
         working-directory: packages/server
         run: |
           mkdir -p dist
           bun build --compile --minify --sourcemap --bytecode ./index.ts --compile --outfile dist/leb-darwin-arm64
+
+      - name: Build Go on macOS
+        if: matrix.os == 'macos-latest'
+        working-directory: packages/server-go
+        run: |
+          mkdir -p dist
+          go mod download
+          GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-darwin-arm64
 
       - name: Build on Linux
         if: matrix.os == 'ubuntu-latest'
@@ -57,18 +70,29 @@ jobs:
           bun build --compile --minify --sourcemap --bytecode --target=bun-linux-x64-modern ./index.ts --outfile dist/leb-linux-x64
           bun build --compile --minify --sourcemap --bytecode --target=bun-linux-arm64 ./index.ts --outfile dist/leb-linux-arm64
 
+      - name: Build Go on Linux
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: packages/server-go
+        run: |
+          mkdir -p dist
+          go mod download
+          GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-linux-x64
+          GOOS=linux GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-linux-arm64
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: packages/server/dist/leb-*
+          path: |
+            packages/server/dist/leb-*
+            packages/server-go/dist/leb-*
 
       - name: Upload to GitHub release (standard release)
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/server/dist/leb-*
+          file: packages/**/dist/leb-*
           file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
@@ -78,7 +102,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/server/dist/leb-*
+          file: packages/**/dist/leb-*
           file_glob: true
           tag: ${{ steps.get_tag.outputs.release_tag }}
           overwrite: true
@@ -104,7 +128,12 @@ jobs:
         with:
           bun-version: latest
 
-      # NOTE: does not seems to work, runner on Windows is always slower than Linux
+      - name: Setup Go (for Windows build)
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      # NOTE: does not seem to work, runner on Windows is always slower than Linux
       - name: Setup Bun cache
         uses: actions/cache@v4
         with:
@@ -139,18 +168,43 @@ jobs:
       #     timestamp-rfc3161: http://timestamp.acs.microsoft.com
       #     timestamp-digest: SHA256
 
+      - name: Build Go Windows binary
+        shell: bash
+        working-directory: packages/server-go
+        run: |
+          mkdir -p dist
+          go mod download
+          GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-windows-x64.exe
+
+      - name: Sign Windows binary with Trusted Signing
+        uses: azure/trusted-signing-action@v0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: https://eus.codesigning.azure.net/
+          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE_NAME }}
+          files-folder: packages/server-go/dist
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-binaries
-          path: packages/server/dist/leb-windows-x64.exe
+          path: |
+            packages/server/dist/leb-windows-x64.exe
+            packages/server-go/dist/leb-server-windows-x64.exe
 
       - name: Upload to GitHub release (standard release)
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/server/dist/leb-windows-x64.exe
+          file: packages/**/dist/leb-*
           tag: ${{ github.ref }}
           overwrite: true
 
@@ -159,6 +213,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/server/dist/leb-windows-x64.exe
+          file: packages/**/dist/leb-*
           tag: ${{ steps.get_tag.outputs.release_tag }}
           overwrite: true
