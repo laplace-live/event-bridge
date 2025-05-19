@@ -4,7 +4,7 @@
     "": {
       "name": "laplace-event-bridge",
       "devDependencies": {
-        "@changesets/cli": "^2.29.3",
+        "@changesets/cli": "^2.29.4",
         "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
         "@laplace.live/event-types": "^2.0.4",
         "bun-types": "latest",
