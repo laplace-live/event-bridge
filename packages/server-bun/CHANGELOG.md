@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.2.4
+
+### Patch Changes
+
+- 33820ec: migrate to go
+
 ## 0.2.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.1.4
+
+### Patch Changes
+
+- 33820ec: migrate to go
+
 ## 0.1.3
 
 ### Patch Changes
