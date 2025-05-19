@@ -1,5 +1,12 @@
 # cli-demo
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [33820ec]
+  - @laplace.live/event-bridge-sdk@0.1.4
+
 ## 0.0.5
 
 ### Patch Changes
