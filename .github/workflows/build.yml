@@ -113,6 +113,7 @@ jobs:
           GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-windows-x64.exe
 
       - name: Sign Windows binary with Trusted Signing
+        if: github.event_name == 'release' || github.event_name == 'repository_dispatch'
         uses: azure/trusted-signing-action@v0
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
