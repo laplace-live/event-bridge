@@ -4,11 +4,12 @@ A WebSocket bridge connecting LAPLACE Chat to clients
 
 ## Monorepo Structure
 
-This repository contains two packages:
+This repository contains multiple packages:
 
-- **Server** (`packages/server`): WebSocket server that routes events between LAPLACE Chat and clients
+- **Server (Go)** (`packages/server`): Standalone Go implementation of the WebSocket bridge (recommended)
+- **Server (Bun, deprecated)** (`packages/server-bun`): Original Bun/Node.js implementation kept for reference
 - **SDK** (`packages/sdk`): TypeScript/JavaScript client for connecting to the bridge
-- **Examples** (`examples/`): Examples of how to use the SDK
+- **Examples** (`examples/`): Usage examples for the SDK
 
 ## Features
 
@@ -19,7 +20,8 @@ This repository contains two packages:
 
 ## Requirements
 
-- [Bun](https://bun.sh/) v1.2.0 or higher
+- [Bun](https://bun.sh/) v1.2.0 or higher (required for managing the monorepo and running the SDK / Bun server)
+- [Go](https://golang.org/) 1.20 or higher (only if you want to build/run the Go server from source)
 
 ## Installation
 
@@ -32,49 +34,36 @@ cd event-bridge
 bun install
 ```
 
-## Server Package
+## Server Package (Go)
 
-### Configuration
+The recommended bridge server is now a single-binary Go application located in `packages/server`. Building or running it does **not** require Bun – only the Go tool-chain.
 
-There are multiple ways to configure the server:
-
-#### Authentication
-
-You can set authentication in order of precedence:
-
-1. Environment variable: `LEB_AUTH="your-secure-token"`
-2. Command line: `--auth "your-secure-token"`
-
-#### Network Interface
-
-Control which network interface the server listens on:
-
-1. Environment variable: `HOST="127.0.0.1"`
-2. Command line: `--host 127.0.0.1`
-
-By default, the server listens on `localhost`.
-
-#### Debug Mode
-
-Enable detailed debug logging using:
-
-1. Environment variable: `DEBUG=1` or `DEBUG=true`
-2. Command line: `--debug`
-
-### Usage
+For full documentation see `packages/server/README.md`, but a quick start looks like this:
 
 ```bash
-# Start the server in development mode
-bun run dev:server
+# Run from source (requires Go installed)
+go run ./packages/server --debug
 
-# Start the server in production mode
-bun run start:server
-
-# Start with CLI options
-bun run start:server --debug --auth "your-secure-token" --host 0.0.0.0
+# Or build a native binary
+cd packages/server
+go build -o leb-server .
+./leb-server --auth "your-secure-token" --host 0.0.0.0
 ```
 
-The server runs on `http://localhost:9696` by default.
+The server listens on `http://localhost:9696` by default.
+
+---
+
+## Server Package (Bun, deprecated)
+
+The original Bun/Node.js implementation lives in `packages/server-bun`. It is feature-equivalent but has been superseded by the Go version for performance and deployment simplicity. It is still shipped for anyone relying on it.
+
+```bash
+# Start the Bun server
+bun run --cwd packages/server-bun start --debug --auth "your-secure-token"
+```
+
+All configuration flags and WebSocket protocols are identical between the two servers.
 
 ## SDK Package
 
