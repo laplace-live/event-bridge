@@ -1,11 +1,12 @@
 import './index.css'
-import { useEffect } from 'react'
-import { eventBridgeClient } from './lib/chat'
-import { EventComponent } from './components/event'
 
+import { useEffect } from 'react'
+
+import { EventComponent } from './components/event'
+import laplaceLogo from './laplace-spaceless.svg'
+import { eventBridgeClient } from './lib/chat'
 import logo from './logo.svg'
 import reactLogo from './react.svg'
-import laplaceLogo from './laplace-spaceless.svg'
 
 export function App() {
   // Cleanup on unmount

@@ -1,4 +1,5 @@
 import { LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
+
 import { useChatStore } from '../store/chatStore'
 
 // Function to initialize and return the client

@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { LaplaceEvent } from '@laplace.live/event-types'
+
 import { useChatStore } from '../store/chatStore'
 import { Timestamp } from './timestamp'
 
