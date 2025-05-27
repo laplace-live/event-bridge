@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { LaplaceEvent } from '@laplace.live/event-types'
 
 import { useChatStore } from '../store/chatStore'
+import { TextEffect } from './text-effect'
 import { Timestamp } from './timestamp'
 
 /**
@@ -53,7 +54,7 @@ const MessageRouter: React.FC<{ event: LaplaceEvent }> = ({ event }) => {
 
     return (
       <div className='flex flex-col opacity-40'>
-        {event.username} {actionMap[event.action]}
+        <TextEffect>{`${event.username} ${actionMap[event.action]}`}</TextEffect>
       </div>
     )
   }
@@ -62,7 +63,7 @@ const MessageRouter: React.FC<{ event: LaplaceEvent }> = ({ event }) => {
     return (
       <div className='flex flex-col'>
         <Timestamp timestamp={event.timestampNormalized} />
-        {event.username}: {event.message}
+        <TextEffect className='text-2xl font-bold'>{`${event.username}: ${event.message}`}</TextEffect>
       </div>
     )
   }
@@ -86,6 +87,6 @@ const MessageRouter: React.FC<{ event: LaplaceEvent }> = ({ event }) => {
   }
 
   if (event.type === 'entry-effect') {
-    return <div className='text-sky-600'>{event.message}</div>
+    return <TextEffect className='text-sky-600'>{event.message}</TextEffect>
   }
 }
