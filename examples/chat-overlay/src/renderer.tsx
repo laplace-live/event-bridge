@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import ReactDOM from 'react-dom/client'
+import { ConnectionState, LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
+import type { LaplaceEvent } from '@laplace.live/event-types'
 
 import './index.css'
 
@@ -13,19 +15,55 @@ declare global {
   }
 }
 
-interface Message {
-  username: string
-  text: string
-}
-
 const App: React.FC = () => {
-  const [messages] = useState<Message[]>([
-    { username: 'User1', text: 'Hello from the React overlay!' },
-    { username: 'User2', text: 'This is a transparent overlay window' },
-  ])
+  const [messages, setMessages] = useState<LaplaceEvent[]>([])
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [opacity, setOpacity] = useState(90)
   const [alwaysOnTop, setAlwaysOnTop] = useState(true)
+  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
+  const [client, setClient] = useState<LaplaceEventBridgeClient | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  useEffect(() => {
+    // Initialize the event bridge client
+    const eventBridgeClient = new LaplaceEventBridgeClient({
+      url: 'ws://localhost:9696',
+      reconnect: true,
+    })
+
+    // Listen for all events
+    eventBridgeClient.onAny(event => {
+      console.log('Received event:', event)
+      setMessages(prev => [...prev, event])
+    })
+
+    // Listen for connection state changes
+    eventBridgeClient.onConnectionStateChange(state => {
+      console.log(`Connection state changed to: ${state}`)
+      setConnectionState(state)
+    })
+
+    // Connect to the event bridge
+    eventBridgeClient.connect().catch(err => {
+      console.error('Failed to connect to event bridge:', err)
+    })
+
+    setClient(eventBridgeClient)
+
+    // Cleanup on unmount
+    return () => {
+      eventBridgeClient.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     // Update the background opacity
@@ -64,6 +102,74 @@ const App: React.FC = () => {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isSettingsOpen])
 
+  // Function to render a message based on its type
+  const renderMessage = (event: LaplaceEvent, index: number) => {
+    if (event.type === 'system') {
+      return (
+        <div key={index} className='message system-message'>
+          <span className='text'>{event.message}</span>
+        </div>
+      )
+    }
+
+    if (event.type === 'interaction') {
+      const actionMap: { [key: number]: string } = {
+        1: '进入直播间',
+        2: '关注',
+        3: '分享',
+        4: '特别关注',
+        5: '互相关注',
+      }
+
+      return (
+        <div key={index} className='message interaction-message'>
+          <span className='text'>
+            {event.username} {actionMap[event.action]}
+          </span>
+        </div>
+      )
+    }
+
+    if (event.type === 'message') {
+      return (
+        <div key={index} className='message'>
+          <span className='username'>{event.username}:</span>
+          <span className='text'>{event.message}</span>
+        </div>
+      )
+    }
+
+    if (event.type === 'superchat') {
+      return (
+        <div key={index} className='message superchat-message'>
+          <span className='username'>{event.username}:</span>
+          <span className='price'>[¥{event.priceNormalized}]</span>
+          <span className='text'>{event.message}</span>
+        </div>
+      )
+    }
+
+    if (event.type === 'gift') {
+      return (
+        <div key={index} className='message gift-message'>
+          <span className='username'>{event.username}:</span>
+          <span className='price'>[¥{event.priceNormalized}]</span>
+          <span className='text'>{event.message}</span>
+        </div>
+      )
+    }
+
+    if (event.type === 'entry-effect') {
+      return (
+        <div key={index} className='message entry-effect'>
+          <span className='text'>{event.message}</span>
+        </div>
+      )
+    }
+
+    return null
+  }
+
   return (
     <>
       <div className='title-bar'>
@@ -80,14 +186,24 @@ const App: React.FC = () => {
 
       <div className='content'>
         <div className='chat-container'>
-          <h2>Chat Messages</h2>
+          <div className='chat-header'>
+            <h2>Chat Messages</h2>
+            <div className='connection-status'>
+              <span className={`status-dot ${connectionState}`}></span>
+              <span className='status-text'>{connectionState}</span>
+            </div>
+          </div>
           <div className='chat-messages'>
-            {messages.map((message, index) => (
-              <div key={index} className='message'>
-                <span className='username'>{message.username}:</span>
-                <span className='text'>{message.text}</span>
+            {messages.length === 0 ? (
+              <div className='no-messages'>
+                {connectionState === ConnectionState.CONNECTED
+                  ? 'Waiting for messages...'
+                  : 'Connecting to LAPLACE Event Bridge...'}
               </div>
-            ))}
+            ) : (
+              messages.map((message, index) => renderMessage(message, index))
+            )}
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </div>
@@ -145,4 +261,4 @@ if (container) {
   root.render(<App />)
 }
 
-console.log('👋 Chat overlay is now running with React!')
+console.log('👋 Chat overlay is now running with LAPLACE Event Bridge integration!')

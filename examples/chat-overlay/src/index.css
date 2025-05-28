@@ -258,3 +258,101 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* Connection Status Styles */
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #f44336;
+  transition: background-color 0.3s;
+}
+
+.status-dot.connected {
+  background-color: #4caf50;
+}
+
+.status-dot.connecting,
+.status-dot.reconnecting {
+  background-color: #ff9800;
+  animation: pulse 1.5s infinite;
+}
+
+.status-text {
+  text-transform: capitalize;
+}
+
+/* Message Type Styles */
+.no-messages {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 40px 20px;
+  font-style: italic;
+}
+
+.system-message {
+  background-color: rgba(33, 150, 243, 0.2);
+  border-left: 3px solid #2196f3;
+}
+
+.interaction-message {
+  background-color: rgba(255, 255, 255, 0.05);
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.superchat-message {
+  background-color: rgba(255, 152, 0, 0.2);
+  border-left: 3px solid #ff9800;
+}
+
+.gift-message {
+  background-color: rgba(233, 30, 99, 0.2);
+  border-left: 3px solid #e91e63;
+}
+
+.entry-effect {
+  background-color: rgba(0, 188, 212, 0.2);
+  border-left: 3px solid #00bcd4;
+  text-align: center;
+  font-style: italic;
+}
+
+.price {
+  color: #ffc107;
+  font-weight: bold;
+  margin: 0 5px;
+}
+
+/* Auto-scroll for new messages */
+.chat-messages {
+  scroll-behavior: smooth;
+}
+
+/* Pulse animation for connecting status */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
