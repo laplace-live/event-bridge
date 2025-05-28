@@ -1,13 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
-
+    <title>LAPLACE Chat Overlay</title>
   </head>
   <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+    <div class="title-bar">
+      <span>LAPLACE Chat Overlay</span>
+      <div class="title-bar-buttons">
+        <button id="settings-btn" title="Settings">⚙</button>
+        <button id="close-btn" title="Close">×</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="chat-container">
+        <h2>Chat Messages</h2>
+        <div class="chat-messages">
+          <div class="message">
+            <span class="username">User1:</span>
+            <span class="text">Hello from the overlay!</span>
+          </div>
+          <div class="message">
+            <span class="username">User2:</span>
+            <span class="text">This is a transparent overlay window</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Settings</h3>
+          <button id="close-modal-btn" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-item">
+            <label for="opacity-slider">Background Opacity:</label>
+            <div class="slider-container">
+              <input type="range" id="opacity-slider" min="0" max="100" value="90" />
+              <span id="opacity-value">90%</span>
+            </div>
+          </div>
+          <div class="setting-item">
+            <label class="checkbox-label">
+              <input type="checkbox" id="always-on-top" checked />
+              <span>Always on Top</span>
+            </label>
+            <p class="setting-description">Keep the overlay window above all other windows</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>
