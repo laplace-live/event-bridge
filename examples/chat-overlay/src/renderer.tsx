@@ -11,6 +11,9 @@ declare global {
     electronAPI: {
       setWindowOpacity: (opacity: number) => void
       setAlwaysOnTop: (enabled: boolean) => void
+      setClickThrough: (enabled: boolean) => void
+      setIgnoreMouseEvents: (ignore: boolean) => void
+      onClickThroughEnabled: (callback: (enabled: boolean) => void) => () => void
     }
   }
 }
@@ -20,9 +23,23 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [opacity, setOpacity] = useState(90)
   const [alwaysOnTop, setAlwaysOnTop] = useState(true)
+  const [clickThrough, setClickThrough] = useState(false)
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
   const [client, setClient] = useState<LaplaceEventBridgeClient | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const titleBarRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const clickThroughEnabledRef = useRef(false)
+  const isSettingsOpenRef = useRef(false)
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    clickThroughEnabledRef.current = clickThrough
+  }, [clickThrough])
+
+  useEffect(() => {
+    isSettingsOpenRef.current = isSettingsOpen
+  }, [isSettingsOpen])
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -73,6 +90,50 @@ const App: React.FC = () => {
     }
   }, [opacity])
 
+  useEffect(() => {
+    // Set up mouse tracking for click-through functionality
+    const handleMouseMove = (e: MouseEvent) => {
+      // Only process if click-through is enabled and settings modal is not open
+      if (!clickThroughEnabledRef.current || isSettingsOpenRef.current) {
+        window.electronAPI.setIgnoreMouseEvents(false)
+        return
+      }
+
+      const titleBar = titleBarRef.current
+      if (!titleBar) return
+
+      const titleBarRect = titleBar.getBoundingClientRect()
+      const isOverTitleBar = e.clientY <= titleBarRect.bottom
+
+      // Only ignore mouse events when NOT over the title bar
+      window.electronAPI.setIgnoreMouseEvents(!isOverTitleBar)
+    }
+
+    // Add mouse move listener
+    document.addEventListener('mousemove', handleMouseMove)
+
+    // Listen for click-through state changes from main process
+    const unsubscribe = window.electronAPI.onClickThroughEnabled(enabled => {
+      clickThroughEnabledRef.current = enabled
+      if (!enabled) {
+        window.electronAPI.setIgnoreMouseEvents(false)
+      }
+    })
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      window.electronAPI.setIgnoreMouseEvents(false)
+      unsubscribe() // Clean up the IPC listener
+    }
+  }, [])
+
+  // Ensure click-through is disabled when settings modal is open
+  useEffect(() => {
+    if (isSettingsOpen && clickThrough) {
+      window.electronAPI.setIgnoreMouseEvents(false)
+    }
+  }, [isSettingsOpen, clickThrough])
+
   const handleClose = () => {
     window.close()
   }
@@ -87,6 +148,21 @@ const App: React.FC = () => {
     setAlwaysOnTop(enabled)
     window.electronAPI.setAlwaysOnTop(enabled)
   }
+
+  const handleClickThroughChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = e.target.checked
+    setClickThrough(enabled)
+    window.electronAPI.setClickThrough(enabled)
+  }
+
+  // Update body class when click-through mode changes
+  useEffect(() => {
+    if (clickThrough) {
+      document.body.classList.add('click-through')
+    } else {
+      document.body.classList.remove('click-through')
+    }
+  }, [clickThrough])
 
   const closeSettings = () => {
     setIsSettingsOpen(false)
@@ -172,7 +248,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className='title-bar'>
+      <div className='title-bar' ref={titleBarRef}>
         <span>LAPLACE Chat Overlay</span>
         <div className='title-bar-buttons'>
           <button id='settings-btn' title='Settings' onClick={() => setIsSettingsOpen(true)}>
@@ -184,7 +260,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className='content'>
+      <div className='content' ref={contentRef}>
         <div className='chat-container'>
           <div className='chat-header'>
             <h2>Chat Messages</h2>
@@ -246,6 +322,15 @@ const App: React.FC = () => {
                 <span>Always on Top</span>
               </label>
               <p className='setting-description'>Keep the overlay window above all other windows</p>
+            </div>
+            <div className='setting-item'>
+              <label className='checkbox-label'>
+                <input type='checkbox' id='click-through' checked={clickThrough} onChange={handleClickThroughChange} />
+                <span>Click Pass-Through</span>
+              </label>
+              <p className='setting-description'>
+                Make the chat area click-through while keeping the title bar interactive
+              </p>
             </div>
           </div>
         </div>

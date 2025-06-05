@@ -356,3 +356,25 @@ body {
     opacity: 1;
   }
 }
+
+/* Click-through mode indicator */
+body.click-through .content {
+  border: 2px dashed rgba(79, 195, 247, 0.3);
+  border-top: none;
+}
+
+body.click-through .chat-container {
+  position: relative;
+}
+
+body.click-through .chat-container::after {
+  content: 'Click Pass-Through Mode';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  color: rgba(79, 195, 247, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  pointer-events: none;
+}

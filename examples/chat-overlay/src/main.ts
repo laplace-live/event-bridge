@@ -42,6 +42,24 @@ const createWindow = () => {
   ipcMain.on('set-always-on-top', (event, enabled) => {
     mainWindow.setAlwaysOnTop(enabled)
   })
+
+  // Handle click pass-through toggle
+  ipcMain.on('set-click-through', (event, enabled) => {
+    if (enabled) {
+      // Don't make the entire window click-through immediately
+      // Instead, let the renderer handle mouse tracking
+      mainWindow.webContents.send('click-through-enabled', true)
+    } else {
+      // Disable click pass-through
+      mainWindow.setIgnoreMouseEvents(false)
+      mainWindow.webContents.send('click-through-enabled', false)
+    }
+  })
+
+  // Handle mouse enter/leave events for click-through mode
+  ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
+    mainWindow.setIgnoreMouseEvents(ignore, { forward: true })
+  })
 }
 
 // This method will be called when Electron has finished
