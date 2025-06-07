@@ -50,7 +50,9 @@ go build -o leb-server .
 
 The server listens on `http://localhost:9696` by default.
 
----
+### Event Fetcher Bridge Mode
+
+In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability. With this mode, you do not need to keep the LAPLACE Chat dashboard running as it will run as the event fetcher + bridge server for you.
 
 ### Server Package (Bun, deprecated)
 
@@ -60,12 +62,6 @@ The original Bun/Node.js implementation lives in `packages/server-bun`. It is fe
 # Start the Bun server
 bun run --cwd packages/server-bun start --debug --auth "your-secure-token"
 ```
-
-All configuration flags and WebSocket protocols are identical between the two servers.
-
-### Event Fetcher Bridge Mode
-
-In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability. With this mode, you do not need to keep the LAPLACE Chat dashboard running as it will run as the event fetcher + bridge server for you.
 
 ## SDK
 
