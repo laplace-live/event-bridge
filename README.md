@@ -65,7 +65,7 @@ All configuration flags and WebSocket protocols are identical between the two se
 
 ### Event Fetcher Bridge Mode
 
-In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability. With this mode, you do not need to keep the LAPLACE Chat dashboard running as the event fetcher will run as a bridge server for you.
+In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability. With this mode, you do not need to keep the LAPLACE Chat dashboard running as the event fetcher will run as the event fetcher + bridge server for you.
 
 ## SDK
 
