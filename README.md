@@ -25,16 +25,14 @@ This repository contains multiple packages:
 
 ## Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/laplace-live/event-bridge
-cd event-bridge
+You can run the server in different methods:
 
-# Install dependencies for all packages
-bun install
-```
+- Go server (easy to deploy, recommended)
+- `laplace-event-fetcher` bridge mode (recommended for stability)
+- Bun server (deprecated, only for reference)
+- Source code (for advanced users and developers)
 
-## Server Package (Go)
+### Server Package (Go)
 
 The recommended bridge server is now a single-binary Go application located in `packages/server`. Building or running it does **not** require Bun – only the Go tool-chain.
 
@@ -54,7 +52,7 @@ The server listens on `http://localhost:9696` by default.
 
 ---
 
-## Server Package (Bun, deprecated)
+### Server Package (Bun, deprecated)
 
 The original Bun/Node.js implementation lives in `packages/server-bun`. It is feature-equivalent but has been superseded by the Go version for performance and deployment simplicity. It is still shipped for anyone relying on it.
 
@@ -65,11 +63,11 @@ bun run --cwd packages/server-bun start --debug --auth "your-secure-token"
 
 All configuration flags and WebSocket protocols are identical between the two servers.
 
-## Event Fetcher Bridge Mode
+### Event Fetcher Bridge Mode
 
-In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability.
+In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability. With this mode, you do not need to keep the LAPLACE Chat dashboard running as the event fetcher will run as a bridge server for you.
 
-## SDK Package
+## SDK
 
 The SDK provides a client for connecting to the event bridge.
 
