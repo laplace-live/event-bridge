@@ -65,6 +65,10 @@ bun run --cwd packages/server-bun start --debug --auth "your-secure-token"
 
 All configuration flags and WebSocket protocols are identical between the two servers.
 
+## Event Fetcher Bridge Mode
+
+In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability.
+
 ## SDK Package
 
 The SDK provides a client for connecting to the event bridge.
