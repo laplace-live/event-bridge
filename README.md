@@ -32,7 +32,7 @@ You can run the server in different methods:
 - Bun server (deprecated, only for reference)
 - Source code (for advanced users and developers)
 
-### Server Package (Go)
+### Bridge Server (Go)
 
 The recommended bridge server is now a single-binary Go application located in `packages/server`. Building or running it does **not** require Bun – only the Go tool-chain.
 
@@ -54,7 +54,7 @@ The server listens on `http://localhost:9696` by default.
 
 In the latest version of [laplace-event-fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) (v2.2.0 and above), you can enable the WebSocket bridge mode to run the event fetcher as a bridge server for better stability. With this mode, you do not need to keep the LAPLACE Chat dashboard running as it will run as the event fetcher + bridge server for you.
 
-### Server Package (Bun, deprecated)
+### Bridge Server (Bun, deprecated)
 
 The original Bun/Node.js implementation lives in `packages/server-bun`. It is feature-equivalent but has been superseded by the Go version for performance and deployment simplicity. It is still shipped for anyone relying on it.
 
@@ -62,6 +62,19 @@ The original Bun/Node.js implementation lives in `packages/server-bun`. It is fe
 # Start the Bun server
 bun run --cwd packages/server-bun start --debug --auth "your-secure-token"
 ```
+
+## Server Comparison
+
+| Feature                    | Bridge Server (Go)                      | Event Fetcher Bridge Mode                                                               |
+| -------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Installation**           | Single binary or Go toolchain           | Requires LAPLACE Event Fetcher v2.2.0+                                                  |
+| **Environment**            | Local (standalone binary)               | Container                                                                               |
+| **Deployment**             | Easy - single file deployment           | Needs server running                                                                    |
+| **LAPLACE Chat Dashboard** | Required                                | Not required                                                                            |
+| **Reuse Local Connection** | Yes                                     | No                                                                                      |
+| **Configuration**          | Command-line flags                      | Event fetcher config                                                                    |
+| **Stability**              | Depends on your local network           | Better stability                                                                        |
+| **Best For**               | Hobby projects integration, small scale | Production ready and large scale for MCN agencies, or users already using event fetcher |
 
 ## SDK
 
