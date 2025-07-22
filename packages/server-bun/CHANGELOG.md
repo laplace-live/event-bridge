@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.2.6
+
+### Patch Changes
+
+- 130a126: Global version bump
+
 ## 0.2.5
 
 ### Patch Changes

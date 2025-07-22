@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.1.6
+
+### Patch Changes
+
+- 130a126: Global version bump
+
 ## 0.1.5
 
 ### Patch Changes
