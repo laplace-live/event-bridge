@@ -13,7 +13,7 @@
     },
     "examples/cli-demo": {
       "name": "cli-demo",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "bin": {
         "event-bridge-cli": "./src/index.ts",
       },
@@ -28,7 +28,7 @@
     },
     "examples/react-demo": {
       "name": "bun-react-template",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -48,7 +48,7 @@
     },
     "examples/solid-demo": {
       "name": "solid-demo",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -61,7 +61,7 @@
     },
     "examples/svelte-demo": {
       "name": "svelte-demo",
-      "version": "0.0.8",
+      "version": "0.0.9",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -87,7 +87,7 @@
     },
     "examples/vue-demo": {
       "name": "vue-demo",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -102,7 +102,7 @@
     },
     "packages/sdk": {
       "name": "@laplace.live/event-bridge-sdk",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.4",
       },
@@ -115,7 +115,7 @@
     },
     "packages/server-bun": {
       "name": "@laplace.live/event-bridge-server",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.4",
       },
