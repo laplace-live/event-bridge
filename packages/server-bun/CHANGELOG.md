@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.0
+
+### Minor Changes
+
+- 6c1d56c: Ability to pass query params
+
 ## 0.2.6
 
 ### Patch Changes
