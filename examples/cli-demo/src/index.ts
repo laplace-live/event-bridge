@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { program } from 'commander'
 import chalk from 'chalk'
+import { program } from 'commander'
 import { LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
 
 // Define version and description
@@ -9,6 +9,7 @@ program.name('event-bridge-cli').description('CLI for LAPLACE Event Bridge').ver
 // Define options
 program
   .option('-u, --url <url>', 'WebSocket URL', 'ws://localhost:9696')
+  .option('-t, --token <token>', 'Token', 'laplace')
   .option('-r, --reconnect', 'Enable auto-reconnect', true)
   .option('-i, --interval <ms>', 'Reconnect interval in milliseconds', '3000')
   .option('-a, --attempts <number>', 'Maximum reconnect attempts', '10')
@@ -30,6 +31,7 @@ console.log(chalk.yellow('Connecting to:'), options.url)
 // Initialize the client
 const client = new LaplaceEventBridgeClient({
   url: options.url,
+  token: options.token,
   reconnect: options.reconnect,
   reconnectInterval: parseInt(options.interval),
   maxReconnectAttempts: parseInt(options.attempts),
