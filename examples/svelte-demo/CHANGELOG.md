@@ -1,5 +1,12 @@
 # svelte-demo
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [37ff9d4]
+  - @laplace.live/event-bridge-sdk@0.1.5
+
 ## 0.0.7
 
 ### Patch Changes
