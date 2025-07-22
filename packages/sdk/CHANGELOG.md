@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.2.0
+
+### Minor Changes
+
+- ba1acd3: Ability to auth via query params
+
 ## 0.1.7
 
 ### Patch Changes
