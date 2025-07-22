@@ -1,5 +1,13 @@
 # bun-react-template
 
+## 0.1.8
+
+### Patch Changes
+
+- 130a126: Global version bump
+- Updated dependencies [130a126]
+  - @laplace.live/event-bridge-sdk@0.1.6
+
 ## 0.1.7
 
 ### Patch Changes

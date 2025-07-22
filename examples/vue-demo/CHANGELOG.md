@@ -1,5 +1,13 @@
 # vue-demo
 
+## 0.0.8
+
+### Patch Changes
+
+- 130a126: Global version bump
+- Updated dependencies [130a126]
+  - @laplace.live/event-bridge-sdk@0.1.6
+
 ## 0.0.7
 
 ### Patch Changes
