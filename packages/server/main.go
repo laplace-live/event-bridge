@@ -72,6 +72,11 @@ func main() {
 		role, password := parseSubprotocol(r.Header.Get("Sec-WebSocket-Protocol"))
 		isServer := role == "laplace-event-bridge-role-server"
 
+		// if auth token is not in header, try query param
+		if password == "" {
+			password = r.URL.Query().Get("token")
+		}
+
 		if authToken != "" && password != authToken {
 			log.Warn().Msgf("Authentication failed: Invalid token for %s connection", ternary(isServer, "server", "client"))
 			w.WriteHeader(http.StatusUnauthorized)
