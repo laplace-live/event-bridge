@@ -82,13 +82,19 @@ export class LaplaceEventBridgeClient {
 
         this.setConnectionState(ConnectionState.CONNECTING)
 
+        let url = this.options.url
         const protocols: string[] = []
         if (this.options.token) {
           // Add the token as the second protocol parameter
           protocols.push('laplace-event-bridge-role-client', this.options.token)
+
+          // Also add token as a query parameter
+          const urlObj = new URL(url)
+          urlObj.searchParams.set('token', this.options.token)
+          url = urlObj.toString()
         }
 
-        this.ws = new WebSocket(this.options.url, protocols)
+        this.ws = new WebSocket(url, protocols)
 
         this.ws.onopen = () => {
           this.setConnectionState(ConnectionState.CONNECTED)
