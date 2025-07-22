@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.1.5
+
+### Patch Changes
+
+- 37ff9d4: Update types
+
 ## 0.1.4
 
 ### Patch Changes
