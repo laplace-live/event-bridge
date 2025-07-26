@@ -13,7 +13,7 @@
     },
     "examples/cli-demo": {
       "name": "cli-demo",
-      "version": "0.0.8",
+      "version": "0.0.10",
       "bin": {
         "event-bridge-cli": "./src/index.ts",
       },
@@ -28,7 +28,7 @@
     },
     "examples/react-demo": {
       "name": "bun-react-template",
-      "version": "0.1.8",
+      "version": "0.1.10",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -48,7 +48,7 @@
     },
     "examples/solid-demo": {
       "name": "solid-demo",
-      "version": "0.0.8",
+      "version": "0.0.10",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -61,7 +61,7 @@
     },
     "examples/svelte-demo": {
       "name": "svelte-demo",
-      "version": "0.0.9",
+      "version": "0.0.11",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -87,7 +87,7 @@
     },
     "examples/vue-demo": {
       "name": "vue-demo",
-      "version": "0.0.8",
+      "version": "0.0.10",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.4",
@@ -102,7 +102,7 @@
     },
     "packages/sdk": {
       "name": "@laplace.live/event-bridge-sdk",
-      "version": "0.1.6",
+      "version": "0.2.0",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.4",
       },
@@ -115,7 +115,7 @@
     },
     "packages/server-bun": {
       "name": "@laplace.live/event-bridge-server",
-      "version": "0.2.6",
+      "version": "0.3.0",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.4",
       },
@@ -318,9 +318,9 @@
 
     "@laplace.live/event-bridge-server": ["@laplace.live/event-bridge-server@workspace:packages/server-bun"],
 
-    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.6", "", { "dependencies": { "@laplace.live/internal": "^1.1.103" }, "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-IkfsskeXyyBfdHEx1TFi2pN8TiIfE4kV9dm+ZbCSKpK9yRs89pAQZOpCVcYYFDlcBMNvOdtUCYFiPW2MqKFJEw=="],
+    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.7", "", { "dependencies": { "@laplace.live/internal": "^1.1.113" }, "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-UIy5cIUComR25mfWG1xuVLlVcrFZxz0WFnZNeTLUOpkQ+fxxTW5kyRcl9JYhqdSUndYWqYZy4opl1ji4IeBAYA=="],
 
-    "@laplace.live/internal": ["@laplace.live/internal@1.1.103", "", { "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-E4flk+UMHlbRvG/cRzYWBFI9W+W1kdzENCSJab3EuEdme4MTafMeqB9/D4mYX1iBSBIq9O0dp3SuYAZxSPhdvA=="],
+    "@laplace.live/internal": ["@laplace.live/internal@1.1.113", "", { "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-dSt1SV1W8gAA3+wE7bWDki6XcetIgjp7W7J8MCDocpulccHsfI2ij4IkxytCbeeHxLpjXcQuZ7/Ju5aOHW9t0Q=="],
 
     "@manypkg/find-root": ["@manypkg/find-root@1.1.0", "", { "dependencies": { "@babel/runtime": "^7.5.5", "@types/node": "^12.7.1", "find-up": "^4.1.0", "fs-extra": "^8.1.0" } }, "sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA=="],
 
