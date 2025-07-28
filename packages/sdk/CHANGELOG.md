@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.2.1
+
+### Patch Changes
+
+- dc0ed82: Update event parsers and types
+
 ## 0.2.0
 
 ### Minor Changes
