@@ -126,6 +126,31 @@ You can read more about the event types in the [Event Types documentation](https
 - Connect to 3rd party services like streamer.bot or SAMMI
 - ...any other use case you can think of
 
+## Development
+
+### SDK Release Process
+
+The SDK (`@laplace.live/event-bridge-sdk`) follows a structured release process using changesets for version management.
+
+1. **Make your changes** to the SDK in `packages/sdk/`
+
+2. **Create a changeset** to document your changes:
+
+   ```bash
+   bunx @changesets/cli
+   ```
+
+   - Select `@laplace.live/event-bridge-sdk` from the package list
+   - Choose the appropriate version bump (patch/minor/major)
+   - Write a clear description of the changes
+
+3. **Commit your changes** including the generated changeset file:
+
+   ```bash
+   git add .
+   git commit -m "feat(sdk): your change description"
+   ```
+
 ## License
 
 AGPL and MIT
