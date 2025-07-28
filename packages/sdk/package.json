@@ -22,7 +22,7 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@laplace.live/event-types": "^2.0.4"
+    "@laplace.live/event-types": "^2.0.9"
   },
   "peerDependencies": {
     "@laplace.live/event-types": "^2.0.4"
