@@ -4,13 +4,13 @@ This monorepo contains multiple packages with different licenses:
 
 ## Package Licenses
 
-### Server Packages (AGPL-3.0)
+### Server Packages
 
 - `packages/server` - AGPL-3.0
 - `packages/server-bun` - AGPL-3.0
 - `examples/cli-demo` - AGPL-3.0
 
-### SDK Package (MIT)
+### SDK Package
 
 - `packages/sdk` - MIT
 
