@@ -6,7 +6,7 @@
       "devDependencies": {
         "@changesets/cli": "^2.29.5",
         "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
-        "@laplace.live/event-types": "^2.0.6",
+        "@laplace.live/event-types": "^2.0.9",
         "bun-types": "latest",
         "prettier": "^3.6.2",
       },
@@ -318,7 +318,7 @@
 
     "@laplace.live/event-bridge-server": ["@laplace.live/event-bridge-server@workspace:packages/server-bun"],
 
-    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.7", "", { "dependencies": { "@laplace.live/internal": "^1.1.113" }, "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-UIy5cIUComR25mfWG1xuVLlVcrFZxz0WFnZNeTLUOpkQ+fxxTW5kyRcl9JYhqdSUndYWqYZy4opl1ji4IeBAYA=="],
+    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.9", "", { "dependencies": { "@laplace.live/internal": "^1.1.113" }, "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-DgAa/QqaCh24zG5Q8NGm9WscG4RB4DzNCuHvDCb1JuX48zKDgngydxeS4NkaobCcxZpjcoNmMJTwz+FduABHcw=="],
 
     "@laplace.live/internal": ["@laplace.live/internal@1.1.113", "", { "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-dSt1SV1W8gAA3+wE7bWDki6XcetIgjp7W7J8MCDocpulccHsfI2ij4IkxytCbeeHxLpjXcQuZ7/Ju5aOHW9t0Q=="],
 
