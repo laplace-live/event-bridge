@@ -1,5 +1,13 @@
 # vue-demo
 
+## 0.0.12
+
+### Patch Changes
+
+- Updated dependencies [7d5020c]
+- Updated dependencies [90cbaa2]
+  - @laplace.live/event-bridge-sdk@0.2.2
+
 ## 0.0.11
 
 ### Patch Changes
