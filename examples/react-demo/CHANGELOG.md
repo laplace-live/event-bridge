@@ -1,5 +1,12 @@
 # bun-react-template
 
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [e6abf95]
+  - @laplace.live/event-bridge-sdk@0.2.3
+
 ## 0.1.12
 
 ### Patch Changes

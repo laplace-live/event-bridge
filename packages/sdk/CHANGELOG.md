@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.2.3
+
+### Patch Changes
+
+- e6abf95: Update parser deps
+
 ## 0.2.2
 
 ### Patch Changes
