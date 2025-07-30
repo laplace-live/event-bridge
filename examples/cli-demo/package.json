@@ -1,7 +1,7 @@
 {
   "name": "cli-demo",
   "private": true,
-  "version": "0.0.11",
+  "version": "0.0.12",
   "type": "module",
   "bin": {
     "event-bridge-cli": "./src/index.ts"

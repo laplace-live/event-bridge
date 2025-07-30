@@ -1,5 +1,12 @@
 # @laplace.live/event-bridge-sdk
 
+## 0.2.2
+
+### Patch Changes
+
+- 7d5020c: Fix protobuf parsing
+- 90cbaa2: Update deps and event parser types
+
 ## 0.2.1
 
 ### Patch Changes
