@@ -6,7 +6,7 @@
       "devDependencies": {
         "@changesets/cli": "^2.29.5",
         "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
-        "@laplace.live/event-types": "^2.0.10",
+        "@laplace.live/event-types": "^2.0.11",
         "bun-types": "latest",
         "prettier": "^3.6.2",
       },
@@ -104,7 +104,7 @@
       "name": "@laplace.live/event-bridge-sdk",
       "version": "0.2.1",
       "dependencies": {
-        "@laplace.live/event-types": "^2.0.9",
+        "@laplace.live/event-types": "^2.0.11",
       },
       "devDependencies": {
         "bun-types": "latest",
@@ -318,7 +318,7 @@
 
     "@laplace.live/event-bridge-server": ["@laplace.live/event-bridge-server@workspace:packages/server-bun"],
 
-    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.10", "", { "dependencies": { "@laplace.live/internal": "^1.1.114" }, "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-QXUA1FX1gpcpTlP8C+hnNFMlHpdYA3xAu1jvN0QszU55s9rbcnVfsnTYhLhgH0VIPmffh9uqcndKXvxBfw3LiA=="],
+    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.11", "", { "dependencies": { "@laplace.live/internal": "^1.1.114" }, "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-j+zIEFGTX/U4GhXg0Kb5Ubtg6VtlAUQxzx3U4+EKsrAZOImam1x2qwugsr5vzEOy+A6mL+pW+qpz93m+lPfFLw=="],
 
     "@laplace.live/internal": ["@laplace.live/internal@1.1.114", "", { "peerDependencies": { "typescript": "^5.8.3" } }, "sha512-ul1LSTyfhUsg+9PcEEpgG2Z11EZ8qMLmSsia2Dugcc+gj4c24OIDocG3GTgvjCV16mIKaOo68n1ToAcBpK8iww=="],
 
