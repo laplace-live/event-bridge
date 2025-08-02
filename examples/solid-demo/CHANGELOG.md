@@ -1,5 +1,12 @@
 # solid-demo
 
+## 0.0.15
+
+### Patch Changes
+
+- Updated dependencies [a6a53e7]
+  - @laplace.live/event-bridge-sdk@1.0.1
+
 ## 0.0.14
 
 ### Patch Changes
