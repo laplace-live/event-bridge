@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.0
+
+### Major Changes
+
+- 5803ca5: Add server heartbeat support for SDK
+
 ## 0.2.3
 
 ### Patch Changes
