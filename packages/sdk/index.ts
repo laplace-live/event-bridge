@@ -107,6 +107,19 @@ export class LaplaceEventBridgeClient {
           try {
             const data = JSON.parse(event.data)
 
+            // Handle ping from server
+            if (data.type === 'ping') {
+              // Respond with pong
+              this.ws?.send(
+                JSON.stringify({
+                  type: 'pong',
+                  timestamp: Date.now(),
+                  respondingTo: data.timestamp,
+                })
+              )
+              return
+            }
+
             // Store client ID from the established message
             if (data.type === 'established' && data.clientId) {
               this.clientId = data.clientId
