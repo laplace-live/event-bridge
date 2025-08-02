@@ -106,14 +106,24 @@ func main() {
 		clients[conn] = client
 		clientsMutex.Unlock()
 
-		log.Info().Msgf("Client connected: %s%s", clientID, ternary(isServer, " (laplace-chat server)", ""))
+		// Get the connection URL
+		scheme := "ws"
+		if r.TLS != nil {
+			scheme = "wss"
+		}
+		connectURL := fmt.Sprintf("%s://%s%s", scheme, r.Host, r.URL.Path)
+
+		// Mask token in URL if present
+		if authToken != "" && r.URL.Query().Get("token") != "" {
+			connectURL += "?token=***"
+		}
 
 		// send welcome message
 		sendJSON(conn, map[string]any{
 			"type":     "established",
 			"clientId": clientID,
 			"isServer": isServer,
-			"message":  "Connected to LAPLACE Event bridge",
+			"message":  fmt.Sprintf("Connected to LAPLACE Event Bridge: %s", connectURL),
 		})
 
 		go handleConnection(client, debugMode)

@@ -99,7 +99,17 @@ export class LaplaceEventBridgeClient {
         this.ws.onopen = () => {
           this.setConnectionState(ConnectionState.CONNECTED)
           this.reconnectAttempts = 0
-          console.log('Connected to LAPLACE Event Bridge')
+
+          // Create a display URL that masks the token if present
+          const displayUrl = (() => {
+            const urlObj = new URL(url)
+            if (urlObj.searchParams.has('token')) {
+              urlObj.searchParams.set('token', '***')
+            }
+            return urlObj.toString()
+          })()
+
+          console.log(`Connected to LAPLACE Event Bridge: ${displayUrl}`)
           resolve()
         }
 
