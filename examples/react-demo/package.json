@@ -1,6 +1,5 @@
 {
-  "name": "bun-react-template",
-  "version": "0.1.15",
+  "name": "bun-react-demo",
   "private": true,
   "type": "module",
   "main": "src/index.tsx",
