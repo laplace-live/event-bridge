@@ -24,9 +24,6 @@
   "dependencies": {
     "@laplace.live/event-types": "^2.0.12"
   },
-  "peerDependencies": {
-    "@laplace.live/event-types": "^2.0.4"
-  },
   "devDependencies": {
     "bun-types": "latest"
   }
