@@ -6,8 +6,8 @@ import { useChatStore } from '../store/chatStore'
 export function initializeEventBridge() {
   // Create a new client
   const client = new LaplaceEventBridgeClient({
-    url: 'ws://localhost:9696',
-    token: 'your-auth-token', // Optional
+    url: 'wss://event-fetcher.laplace.cn',
+    token: 'laplace', // Optional
     reconnect: true,
   })
 
