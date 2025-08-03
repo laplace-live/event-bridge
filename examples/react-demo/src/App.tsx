@@ -36,7 +36,7 @@ export function App() {
         />
       </div>
 
-      <h1 className='text-3xl font-bold my-4 leading-tight'>Bun + React + LAPLACE Event Bridge</h1>
+      <h1 className='text-3xl font-bold my-4 leading-tight'>LAPLACE Event Bridge + Bun + React</h1>
 
       <div className='grid grid-cols-1 gap-8 mt-8'>
         <EventComponent />
