@@ -63,24 +63,6 @@ This demo uses the LAPLACE Event Bridge SDK to connect to a WebSocket server and
 3. Listening for 'message' events
 4. Displaying received messages in the terminal
 
-## Implementation Details
+## License
 
-The main implementation can be found in `src/index.ts`. Key parts include:
-
-```typescript
-// Initialize the client
-const client = new LaplaceEventBridgeClient({
-  url: options.url,
-  reconnect: options.reconnect,
-  reconnectInterval: parseInt(options.interval),
-  maxReconnectAttempts: parseInt(options.attempts),
-})
-
-// Setup event listeners
-client.on('message', event => {
-  console.log(`${getTimestamp()} ${chalk.green(event.username)}: ${event.message}`)
-})
-
-// Connect to the event bridge
-await client.connect()
-```
+AGPL-3.0
