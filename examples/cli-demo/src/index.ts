@@ -31,7 +31,6 @@ console.log(chalk.yellow('Connecting to:'), options.url)
 // Initialize the client
 const client = new LaplaceEventBridgeClient({
   url: options.url,
-  token: options.token,
   reconnect: options.reconnect,
   reconnectInterval: parseInt(options.interval),
   maxReconnectAttempts: parseInt(options.attempts),
