@@ -13,7 +13,7 @@
   "dependencies": {
     "@laplace.live/event-bridge-sdk": "workspace:*",
     "chalk": "^5.4.1",
-    "commander": "^13.1.0"
+    "commander": "^14.0.0"
   },
   "devDependencies": {
     "bun-types": "latest"
