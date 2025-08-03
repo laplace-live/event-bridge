@@ -2,6 +2,8 @@
 
 A real-time event streaming demo application built with React, Bun, and the LAPLACE Event Bridge SDK. This application demonstrates how to connect to the LAPLACE Event Bridge service to receive and display livestream events.
 
+https://github.com/user-attachments/assets/92e07ddf-ec87-439f-a8b3-55c2407f36d4
+
 ## Features
 
 - 🚀 Built with Bun runtime for fast performance
