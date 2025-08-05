@@ -1,6 +1,8 @@
 import { parseArgs } from 'util'
 import type { LaplaceEvent } from '@laplace.live/event-types'
 
+import pkg from './package.json' with { type: 'json' }
+
 // Parse command line arguments properly
 const { values } = parseArgs({
   args: Bun.argv,
@@ -83,7 +85,8 @@ const server = Bun.serve<Client, {}>({
           type: 'established',
           clientId,
           isServer,
-          message: 'Connected to LAPLACE Event bridge',
+          version: pkg.version,
+          message: 'Connected to LAPLACE Event Bridge',
         })
       )
     },

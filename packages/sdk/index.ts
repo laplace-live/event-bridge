@@ -55,6 +55,7 @@ export class LaplaceEventBridgeClient {
   private reconnectTimer: number | null = null
   private reconnectAttempts = 0
   private clientId: string | null = null
+  private serverVersion: string | null = null
   private connectionState: ConnectionState = ConnectionState.DISCONNECTED
 
   private options: Required<ConnectionOptions> = {
@@ -99,17 +100,6 @@ export class LaplaceEventBridgeClient {
         this.ws.onopen = () => {
           this.setConnectionState(ConnectionState.CONNECTED)
           this.reconnectAttempts = 0
-
-          // Create a display URL that masks the token if present
-          const displayUrl = (() => {
-            const urlObj = new URL(url)
-            if (urlObj.searchParams.has('token')) {
-              urlObj.searchParams.set('token', '***')
-            }
-            return urlObj.toString()
-          })()
-
-          console.log(`Connected to LAPLACE Event Bridge: ${displayUrl}`)
           resolve()
         }
 
@@ -131,9 +121,22 @@ export class LaplaceEventBridgeClient {
             }
 
             // Store client ID from the established message
-            if (data.type === 'established' && data.clientId) {
+            if (data.type === 'established') {
               this.clientId = data.clientId
-              console.log(`Connection established with client ID: ${this.clientId}`)
+              this.serverVersion = data.version
+
+              // Create a display URL that masks the token if present
+              const displayUrl = (() => {
+                const urlObj = new URL(url)
+                if (urlObj.searchParams.has('token')) {
+                  urlObj.searchParams.set('token', '***')
+                }
+                return urlObj.toString()
+              })()
+
+              console.log(
+                `Welcome to LAPLACE Event Bridge ${`v${data.version}` || '(unknown version)'}: ${displayUrl} with client ID ${this.clientId || 'unknown'}`
+              )
             }
 
             // Process the event
