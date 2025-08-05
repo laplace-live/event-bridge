@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.2
+
+### Patch Changes
+
+- c316dad: add ping monitoring for server heartbeats
+
 ## 1.0.1
 
 ### Patch Changes
