@@ -13,7 +13,6 @@
     },
     "examples/cli-demo": {
       "name": "cli-demo",
-      "version": "0.0.15",
       "bin": {
         "event-bridge-cli": "./src/index.ts",
       },
@@ -27,8 +26,7 @@
       },
     },
     "examples/react-demo": {
-      "name": "bun-react-template",
-      "version": "0.1.15",
+      "name": "bun-react-demo",
       "dependencies": {
         "@laplace.live/event-bridge-sdk": "workspace:*",
         "@laplace.live/event-types": "^2.0.12",
@@ -185,7 +183,7 @@
 
     "bun-plugin-tailwind": ["bun-plugin-tailwind@0.0.15", "", { "peerDependencies": { "typescript": "^5.0.0" } }, "sha512-qtAXMNGG4R0UGGI8zWrqm2B7BdXqx48vunJXBPzfDOHPA5WkRUZdTSbE7TFwO4jLhYqSE23YMWsM9NhE6ovobw=="],
 
-    "bun-react-template": ["bun-react-template@workspace:examples/react-demo"],
+    "bun-react-demo": ["bun-react-demo@workspace:examples/react-demo"],
 
     "bun-types": ["bun-types@1.2.19", "", { "dependencies": { "@types/node": "*" }, "peerDependencies": { "@types/react": "^19" } }, "sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ=="],
 
