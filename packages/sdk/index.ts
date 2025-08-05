@@ -45,6 +45,14 @@ export interface ConnectionOptions {
    * @default 10
    */
   maxReconnectAttempts?: number
+  /**
+   * The timeout for ping heartbeat in milliseconds
+   * If no ping is received within this time, the connection is considered dead
+   * Only applies to server versions >= 4.0.2
+   *
+   * @default 90000 (90 seconds)
+   */
+  pingTimeout?: number
 }
 
 export class LaplaceEventBridgeClient {
@@ -52,11 +60,13 @@ export class LaplaceEventBridgeClient {
   private eventHandlers = new Map<string, EventHandler<any>[]>()
   private anyEventHandlers: AnyEventHandler[] = []
   private connectionStateHandlers: ConnectionStateChangeHandler[] = []
-  private reconnectTimer: number | null = null
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempts = 0
   private clientId: string | null = null
   private serverVersion: string | null = null
   private connectionState: ConnectionState = ConnectionState.DISCONNECTED
+  private lastPingTime: number | null = null
+  private pingMonitorTimer: ReturnType<typeof setInterval> | null = null
 
   private options: Required<ConnectionOptions> = {
     url: 'ws://localhost:9696',
@@ -64,6 +74,7 @@ export class LaplaceEventBridgeClient {
     reconnect: true,
     reconnectInterval: 3000,
     maxReconnectAttempts: 10,
+    pingTimeout: 90000, // 90 seconds
   }
 
   constructor(options: ConnectionOptions = {}) {
@@ -109,6 +120,9 @@ export class LaplaceEventBridgeClient {
 
             // Handle ping from server
             if (data.type === 'ping') {
+              // Track last ping time
+              this.lastPingTime = Date.now()
+
               // Respond with pong
               this.ws?.send(
                 JSON.stringify({
@@ -137,6 +151,11 @@ export class LaplaceEventBridgeClient {
               console.log(
                 `Welcome to LAPLACE Event Bridge ${`v${data.version}` || '(unknown version)'}: ${displayUrl} with client ID ${this.clientId || 'unknown'}`
               )
+
+              // Start ping monitoring if server version supports it (>= 4.0.2)
+              if (this.shouldMonitorPing()) {
+                this.startPingMonitoring()
+              }
             }
 
             // Process the event
@@ -162,7 +181,7 @@ export class LaplaceEventBridgeClient {
               this.connect().catch(err => {
                 console.error('Reconnection failed:', err)
               })
-            }, this.options.reconnectInterval) as unknown as number
+            }, this.options.reconnectInterval)
           } else {
             this.setConnectionState(ConnectionState.DISCONNECTED)
           }
@@ -183,6 +202,8 @@ export class LaplaceEventBridgeClient {
       this.reconnectTimer = null
     }
 
+    this.stopPingMonitoring()
+
     if (this.ws) {
       this.ws.close()
       this.ws = null
@@ -190,6 +211,8 @@ export class LaplaceEventBridgeClient {
 
     this.setConnectionState(ConnectionState.DISCONNECTED)
     this.clientId = null
+    this.serverVersion = null
+    this.lastPingTime = null
   }
 
   /**
@@ -333,6 +356,81 @@ export class LaplaceEventBridgeClient {
       } catch (err) {
         console.error('Error in any event handler:', err)
       }
+    }
+  }
+
+  /**
+   * Check if ping monitoring should be enabled based on server version
+   */
+  private shouldMonitorPing(): boolean {
+    if (!this.serverVersion) {
+      return false
+    }
+
+    // Parse version (e.g., "4.0.2" -> [4, 0, 2])
+    const versionParts = this.serverVersion.split('.').map(part => parseInt(part, 10))
+
+    // Ensure we have at least 3 version parts
+    if (versionParts.length < 3 || versionParts.some(isNaN)) {
+      console.warn(`Invalid server version format: ${this.serverVersion}`)
+      return false
+    }
+
+    const major = versionParts[0]!
+    const minor = versionParts[1]!
+    const patch = versionParts[2]!
+
+    // Check if version is >= 4.0.3
+    if (major > 4) return true
+    if (major === 4) {
+      if (minor > 0) return true
+      if (minor === 0 && patch >= 3) return true
+    }
+
+    return false
+  }
+
+  /**
+   * Start monitoring ping messages from the server
+   */
+  private startPingMonitoring(): void {
+    // Stop any existing monitoring
+    this.stopPingMonitoring()
+
+    console.log(`Ping monitoring enabled (timeout: ${this.options.pingTimeout}ms)`)
+
+    // Set initial ping time
+    this.lastPingTime = Date.now()
+
+    // Start monitoring
+    this.pingMonitorTimer = setInterval(() => {
+      if (!this.lastPingTime) {
+        return
+      }
+
+      const timeSinceLastPing = Date.now() - this.lastPingTime
+
+      if (timeSinceLastPing > this.options.pingTimeout) {
+        console.warn(`Ping timeout detected (${timeSinceLastPing}ms since last ping). Reconnecting...`)
+
+        // Stop monitoring
+        this.stopPingMonitoring()
+
+        // Force reconnection
+        if (this.ws) {
+          this.ws.close()
+        }
+      }
+    }, this.options.pingTimeout / 3) // Check 3 times within the timeout period
+  }
+
+  /**
+   * Stop monitoring ping messages
+   */
+  private stopPingMonitoring(): void {
+    if (this.pingMonitorTimer) {
+      clearInterval(this.pingMonitorTimer)
+      this.pingMonitorTimer = null
     }
   }
 }
