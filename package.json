@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.5",
-    "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
+    "@ianvs/prettier-plugin-sort-imports": "^4.6.1",
     "@laplace.live/event-types": "^2.0.12",
     "bun-types": "latest",
     "prettier": "^3.6.2"
