@@ -34,9 +34,18 @@ export interface ConnectionOptions {
    */
   reconnect?: boolean
   /**
-   * The interval between reconnect attempts in milliseconds
+   * The base interval between reconnect attempts in milliseconds.
+   * With exponential backoff, each attempt multiplies this by 1.5^(attempt-1).
+   * The maximum interval is capped at 60 seconds.
    *
    * @default 3000
+   * @example
+   * // With base interval of 3000ms:
+   * // Attempt 1: 3000ms
+   * // Attempt 2: 4500ms
+   * // Attempt 3: 6750ms
+   * // ...
+   * // Capped at: 60000ms
    */
   reconnectInterval?: number
   /**
@@ -182,12 +191,27 @@ export class LaplaceEventBridgeClient {
           if (this.options.reconnect && this.reconnectAttempts < this.options.maxReconnectAttempts) {
             this.reconnectAttempts++
             this.setConnectionState(ConnectionState.RECONNECTING)
-            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.options.maxReconnectAttempts})...`)
+
+            // Calculate exponential backoff with cap at 60 seconds
+            const baseInterval = this.options.reconnectInterval
+            const backoffMultiplier = 1.5 // Increase by 50% each time
+            const maxInterval = 60000 // 60 seconds cap
+
+            // Calculate delay: base * (multiplier ^ (attempt - 1))
+            const calculatedDelay = Math.min(
+              baseInterval * Math.pow(backoffMultiplier, this.reconnectAttempts - 1),
+              maxInterval
+            )
+            const delay = Math.round(calculatedDelay)
+
+            console.log(
+              `Attempting to reconnect (${this.reconnectAttempts}/${this.options.maxReconnectAttempts}) in ${delay}ms...`
+            )
             this.reconnectTimer = setTimeout(() => {
               this.connect().catch(err => {
                 console.error('Reconnection failed:', err)
               })
-            }, this.options.reconnectInterval)
+            }, delay)
           } else {
             this.setConnectionState(ConnectionState.DISCONNECTED)
           }
