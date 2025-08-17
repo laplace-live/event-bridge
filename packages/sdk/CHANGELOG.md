@@ -1,5 +1,12 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.3
+
+### Patch Changes
+
+- 2354831: refine reconnection logic
+- 065f23a: reconenction exponential backoff logic
+
 ## 1.0.2
 
 ### Patch Changes
