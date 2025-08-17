@@ -78,7 +78,7 @@ interface ConnectionOptions {
   token?: string // Authentication token, default: ''
   reconnect?: boolean // Auto reconnect on disconnect, default: true
   reconnectInterval?: number // Milliseconds between reconnect attempts, default: 3000
-  maxReconnectAttempts?: number // Maximum reconnect attempts, default: 10
+  maxReconnectAttempts?: number // Maximum reconnect attempts, default: 1000
 }
 ```
 

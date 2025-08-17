@@ -42,7 +42,7 @@ export interface ConnectionOptions {
   /**
    * The maximum number of reconnect attempts
    *
-   * @default 10
+   * @default 1000
    */
   maxReconnectAttempts?: number
   /**
@@ -73,7 +73,7 @@ export class LaplaceEventBridgeClient {
     token: '',
     reconnect: true,
     reconnectInterval: 3000,
-    maxReconnectAttempts: 10,
+    maxReconnectAttempts: 1000,
     pingTimeout: 90000, // 90 seconds
   }
 
