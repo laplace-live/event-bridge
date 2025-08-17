@@ -20,7 +20,7 @@
     "cli:demo": "bun run --cwd examples/cli-demo start"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.5",
+    "@changesets/cli": "^2.29.6",
     "@ianvs/prettier-plugin-sort-imports": "^4.6.2",
     "@laplace.live/event-types": "^2.0.12",
     "bun-types": "latest",
