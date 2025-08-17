@@ -173,6 +173,12 @@ export class LaplaceEventBridgeClient {
         this.ws.onclose = () => {
           console.log('Disconnected from LAPLACE Event Bridge')
 
+          // Stop ping monitoring before attempting reconnection
+          this.stopPingMonitoring()
+
+          // Clear ping state
+          this.lastPingTime = null
+
           if (this.options.reconnect && this.reconnectAttempts < this.options.maxReconnectAttempts) {
             this.reconnectAttempts++
             this.setConnectionState(ConnectionState.RECONNECTING)
