@@ -46,7 +46,7 @@
     },
     "packages/sdk": {
       "name": "@laplace.live/event-bridge-sdk",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.12",
       },
