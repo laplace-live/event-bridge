@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.2
+
+### Patch Changes
+
+- e8a96e2: Migrate linter from eslint to biome
+
 ## 0.3.1
 
 ### Patch Changes
