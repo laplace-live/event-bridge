@@ -7,7 +7,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "bun build index.ts --outdir dist --target browser --minify"
+    "build": "bun build index.ts --outdir dist --target browser --minify",
+    "lint": "biome check",
+    "format": "biome format --write"
   },
   "exports": {
     ".": {

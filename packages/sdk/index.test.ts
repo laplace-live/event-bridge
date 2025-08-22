@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test'
 import { ConnectionState, LaplaceEventBridgeClient } from './index'
 
 // Detect if running in AI agent environment for cleaner output
-const isAIAgent = process.env['CLAUDECODE'] === '1' || process.env['REPL_ID'] === '1' || process.env['AGENT'] === '1'
+const isAIAgent = process.env.CLAUDECODE === '1' || process.env.REPL_ID === '1' || process.env.AGENT === '1'
 
 // Helper to conditionally log based on AI agent environment
 const log = (...args: any[]) => {
@@ -51,7 +51,7 @@ describe('LaplaceEventBridgeClient', () => {
         // Calculate expected delays
         const expectedDelays: number[] = []
         for (let i = 0; i < maxAttempts; i++) {
-          const delay = Math.min(reconnectInterval * Math.pow(1.5, i), 60000)
+          const delay = Math.min(reconnectInterval * 1.5 ** i, 60000)
           expectedDelays.push(Math.round(delay))
         }
 
@@ -76,8 +76,8 @@ describe('LaplaceEventBridgeClient', () => {
           const match = message.match(/Attempting to reconnect \((\d+)\/\d+\) in (\d+)ms/)
           if (match) {
             reconnectTimings.push({
-              attempt: parseInt(match[1]!),
-              scheduledDelay: parseInt(match[2]!),
+              attempt: parseInt(match[1]!, 10),
+              scheduledDelay: parseInt(match[2]!, 10),
             })
           }
         })
@@ -130,7 +130,7 @@ describe('LaplaceEventBridgeClient', () => {
       // Test first few attempts
       const delays = []
       for (let i = 0; i < 10; i++) {
-        const delay = Math.min(baseInterval * Math.pow(backoffMultiplier, i), maxInterval)
+        const delay = Math.min(baseInterval * backoffMultiplier ** i, maxInterval)
         delays.push(Math.round(delay))
       }
 

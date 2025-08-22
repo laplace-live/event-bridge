@@ -199,7 +199,7 @@ export class LaplaceEventBridgeClient {
 
             // Calculate delay: base * (multiplier ^ (attempt - 1))
             const calculatedDelay = Math.min(
-              baseInterval * Math.pow(backoffMultiplier, this.reconnectAttempts - 1),
+              baseInterval * backoffMultiplier ** (this.reconnectAttempts - 1),
               maxInterval
             )
             const delay = Math.round(calculatedDelay)
@@ -251,10 +251,9 @@ export class LaplaceEventBridgeClient {
    * @param handler The handler function to call when the event is received
    */
   public on<T extends LaplaceEventTypes>(eventType: T, handler: (event: EventTypeMap[T]) => void): void {
-    if (!this.eventHandlers.has(eventType)) {
-      this.eventHandlers.set(eventType, [])
-    }
-    this.eventHandlers.get(eventType)!.push(handler)
+    const handlers = this.eventHandlers.get(eventType) || []
+    handlers.push(handler)
+    this.eventHandlers.set(eventType, handlers)
   }
 
   /**
@@ -281,11 +280,11 @@ export class LaplaceEventBridgeClient {
    * @param handler The handler function to remove
    */
   public off<T extends LaplaceEventTypes>(eventType: T, handler: (event: EventTypeMap[T]) => void): void {
-    if (!this.eventHandlers.has(eventType)) {
+    const handlers = this.eventHandlers.get(eventType)
+    if (!handlers) {
       return
     }
 
-    const handlers = this.eventHandlers.get(eventType)!
     const index = handlers.indexOf(handler)
 
     if (index !== -1) {
@@ -369,8 +368,9 @@ export class LaplaceEventBridgeClient {
 
   private processEvent(event: LaplaceEvent): void {
     // Call specific event handlers
-    if (this.eventHandlers.has(event.type)) {
-      for (const handler of this.eventHandlers.get(event.type)!) {
+    const handlers = this.eventHandlers.get(event.type)
+    if (handlers) {
+      for (const handler of handlers) {
         try {
           handler(event)
         } catch (err) {
@@ -401,14 +401,12 @@ export class LaplaceEventBridgeClient {
     const versionParts = this.serverVersion.split('.').map(part => parseInt(part, 10))
 
     // Ensure we have at least 3 version parts
-    if (versionParts.length < 3 || versionParts.some(isNaN)) {
+    if (versionParts.length < 3 || versionParts.some(Number.isNaN)) {
       console.warn(`Invalid server version format: ${this.serverVersion}`)
       return false
     }
 
-    const major = versionParts[0]!
-    const minor = versionParts[1]!
-    const patch = versionParts[2]!
+    const [major = 0, minor = 0, patch = 0] = versionParts
 
     // Check if version is >= 4.0.3
     if (major > 4) return true

@@ -1,4 +1,4 @@
-import { parseArgs } from 'util'
+import { parseArgs } from 'node:util'
 import type { LaplaceEvent } from '@laplace.live/event-types'
 
 import pkg from './package.json' with { type: 'json' }
@@ -21,13 +21,13 @@ const { values } = parseArgs({
 })
 
 // Get authentication token from environment variable or CLI
-const AUTH_TOKEN = process.env['LEB_AUTH'] || process.env['LAPLACE_EVENT_BRIDGE_AUTH'] || values.auth || ''
+const AUTH_TOKEN = process.env.LEB_AUTH || process.env.LAPLACE_EVENT_BRIDGE_AUTH || values.auth || ''
 
 // Debug mode configuration
-const DEBUG_MODE = process.env['DEBUG'] === '1' || process.env['DEBUG']?.toLowerCase() === 'true' || !!values.debug
+const DEBUG_MODE = process.env.DEBUG === '1' || process.env.DEBUG?.toLowerCase() === 'true' || !!values.debug
 
 // Network interface configuration
-const HOST = process.env['HOST'] || (values.host as string) || 'localhost'
+const HOST = process.env.HOST || (values.host as string) || 'localhost'
 
 interface Client {
   id: string
@@ -97,7 +97,7 @@ const server = Bun.serve<Client, {}>({
       try {
         const messageStr = message.toString()
         let parsedMessage: LaplaceEvent
-        let broadcastMessage
+        let broadcastMessage: unknown
 
         try {
           // Try to parse as JSON
@@ -114,7 +114,7 @@ const server = Bun.serve<Client, {}>({
             ...parsedMessage,
             source: clientId,
           })
-        } catch (e) {
+        } catch {
           // Handle as plain text if not JSON
           console.log(`Received message from ${clientId}: ${messageStr}`)
 
@@ -134,7 +134,7 @@ const server = Bun.serve<Client, {}>({
           // console.log(`Broadcasting message from laplace-chat to all clients`)
 
           // Broadcast to all clients except the server
-          for (const [client, data] of clients.entries()) {
+          for (const [client, _data] of clients.entries()) {
             if (client !== ws) {
               client.send(broadcastMessage)
             }

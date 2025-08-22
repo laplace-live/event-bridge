@@ -1,0 +1,67 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!node_modules", "!dist", "!build", "!output", "!out", "!references", "!migrations"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              [":BUN:", ":NODE:", ":PACKAGE:"],
+              ":BLANK_LINE:",
+              { "type": true },
+              ":BLANK_LINE:",
+              "@/types/**",
+              ":BLANK_LINE:",
+              "@/const/**",
+              "@/data/**",
+              ":BLANK_LINE:",
+              "@/lib/**",
+              ":BLANK_LINE:",
+              "@/utils/**",
+              ":BLANK_LINE:",
+              "@/hooks/**",
+              ":BLANK_LINE:",
+              "@/handlers/**",
+              ":BLANK_LINE:",
+              "@/components/**",
+              ":BLANK_LINE:",
+              ["@/app/**", "@/pages/**"],
+              "@/**"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "es5",
+      "arrowParentheses": "asNeeded"
+    }
+  }
+}
