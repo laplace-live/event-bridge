@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.4
+
+### Patch Changes
+
+- e8a96e2: Migrate linter from eslint to biome
+
 ## 1.0.3
 
 ### Patch Changes
