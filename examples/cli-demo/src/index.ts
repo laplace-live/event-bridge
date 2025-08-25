@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
+import { LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
 import chalk from 'chalk'
 import { program } from 'commander'
-import { LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
 
 // Define version and description
 program.name('event-bridge-cli').description('CLI for LAPLACE Event Bridge').version('0.1.0')
@@ -32,8 +32,8 @@ console.log(chalk.yellow('Connecting to:'), options.url)
 const client = new LaplaceEventBridgeClient({
   url: options.url,
   reconnect: options.reconnect,
-  reconnectInterval: parseInt(options.interval),
-  maxReconnectAttempts: parseInt(options.attempts),
+  reconnectInterval: parseInt(options.interval, 10),
+  maxReconnectAttempts: parseInt(options.attempts, 10),
 })
 
 // Setup event listeners
