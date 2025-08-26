@@ -6,6 +6,8 @@
   "types": "index.ts",
   "license": "MIT",
   "type": "module",
+  "repository": "laplace-live/event-bridge",
+  "homepage": "https://chat.laplace.live",
   "scripts": {
     "build": "bun build index.ts --outdir dist --target browser --minify",
     "lint": "biome check",
