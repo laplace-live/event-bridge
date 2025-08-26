@@ -1,5 +1,12 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.5
+
+### Patch Changes
+
+- 03f4d55: Add urls
+- 655aa47: Provenance statements for packages
+
 ## 1.0.4
 
 ### Patch Changes

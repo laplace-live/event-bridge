@@ -1,7 +1,7 @@
 {
   "name": "@laplace.live/event-bridge-sdk",
   "description": "LAPLACE Event Bridge SDK",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "module": "index.ts",
   "types": "index.ts",
   "license": "MIT",
