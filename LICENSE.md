@@ -45,4 +45,4 @@ For the full MIT license text, see `packages/sdk/LICENSE`.
 
 ## Questions?
 
-If you have questions about licensing or need a different license for your use case, please contact us via Discord.
+If you have questions about licensing or need a different license for your use case, please contact me via Discord.
