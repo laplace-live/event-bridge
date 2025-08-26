@@ -19,7 +19,11 @@ program.parse()
 const options = program.opts()
 
 // Create timestamp
-const getTimestamp = (): string => {
+const getTimestamp = (tz?: number): string => {
+  if (tz) {
+    const now = new Date(tz)
+    return `[${now.toLocaleTimeString()}]`
+  }
   const now = new Date()
   return chalk.gray(`[${now.toLocaleTimeString()}]`)
 }
@@ -38,7 +42,9 @@ const client = new LaplaceEventBridgeClient({
 
 // Setup event listeners
 client.on('message', event => {
-  console.log(`${getTimestamp()} ${chalk.green(event.username)}: ${event.message}`)
+  console.log(
+    `${getTimestamp(event.timestamp)} ${chalk.gray(`[${event.origin}]`)} ${chalk.green(event.username)}: ${event.message}`
+  )
 })
 
 // Connection state changes
