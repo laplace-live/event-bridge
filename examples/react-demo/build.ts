@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
-import { existsSync } from 'fs'
-import { rm } from 'fs/promises'
-import path from 'path'
+
+// This script is not working at the moment
+import { existsSync } from 'node:fs'
+import { rm } from 'node:fs/promises'
+import path from 'node:path'
 import plugin from 'bun-plugin-tailwind'
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {

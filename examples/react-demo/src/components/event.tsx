@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react'
-import { LaplaceEvent } from '@laplace.live/event-types'
+import type { LaplaceEvent } from '@laplace.live/event-types'
+import type React from 'react'
+import { useEffect, useRef } from 'react'
 
 import { useChatStore } from '../store/chatStore'
 import { TextEffect } from './text-effect'
@@ -13,6 +14,7 @@ export const EventComponent: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when messages change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: expected dep
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTo({

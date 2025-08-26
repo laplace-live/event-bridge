@@ -1,5 +1,5 @@
-import { create } from 'zustand'
 import type { LaplaceEvent } from '@laplace.live/event-types'
+import { create } from 'zustand'
 
 interface ChatState {
   messages: LaplaceEvent[]

@@ -1,7 +1,7 @@
 'use client'
 
+import { AnimatePresence, type MotionProps, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, MotionProps } from 'motion/react'
 
 import { cn } from '@/lib/utils'
 
@@ -59,8 +59,8 @@ export function TextEffect({
           letter === ' '
             ? letter
             : index <= iterationCount.current
-              ? children[index]
-              : characterSet[getRandomInt(characterSet.length)]
+              ? (children[index] ?? letter)
+              : (characterSet[getRandomInt(characterSet.length)] ?? letter)
         )
       )
 
@@ -80,7 +80,7 @@ export function TextEffect({
     <MotionComponent className={cn('overflow-hidden', className)} {...props}>
       <AnimatePresence>
         {displayText.map((letter, index) => (
-          <motion.span key={index} className={'font-mono'}>
+          <motion.span key={`${index}-${letter}`} className={'font-mono'}>
             {letter.toUpperCase()}
           </motion.span>
         ))}

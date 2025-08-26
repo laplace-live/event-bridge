@@ -1,0 +1,6 @@
+#! /bin/bash
+
+bun build --compile --minify --sourcemap ./src/index.tsx --compile --outfile dist/leb-cli-darwin-arm64
+bun build --compile --minify --sourcemap --target=bun-linux-x64-modern ./src/index.tsx --outfile dist/leb-cli-linux-x64
+bun build --compile --minify --sourcemap --target=bun-linux-arm64 ./src/index.tsx --outfile dist/leb-cli-linux-arm64
+bun build --compile --minify --sourcemap --target=bun-windows-x64-modern ./src/index.tsx --outfile dist/leb-cli-windows-x64
