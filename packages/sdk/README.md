@@ -2,6 +2,8 @@
 
 A framework agnostic SDK for connecting to the LAPLACE Event Bridge server. This SDK allows clients to receive and send events from/to the LAPLACE Event Bridge.
 
+This package has zero external dependencies.
+
 ## Installation
 
 ```bash
