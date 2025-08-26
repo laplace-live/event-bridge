@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.3
+
+### Patch Changes
+
+- 655aa47: Provenance statements for packages
+
 ## 0.3.2
 
 ### Patch Changes
