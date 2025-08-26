@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.4
+
+### Patch Changes
+
+- 5d020ec: Missing meta info for provenance
+
 ## 0.3.3
 
 ### Patch Changes
