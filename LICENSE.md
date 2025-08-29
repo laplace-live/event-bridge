@@ -39,9 +39,9 @@ For the full MIT license text, see `packages/sdk/LICENSE`.
 
 ## Why Different Licenses?
 
-- **Server packages (AGPL-3.0)**: We use AGPL for server components to ensure that improvements to the server infrastructure benefit the community. If you run a modified version of our server, you must share those modifications.
+- **Server packages (AGPL-3.0)**: I use AGPL for server components to ensure that improvements to the server infrastructure benefit the community. If you run a modified version of our server, you must share those modifications.
 
-- **SDK package (MIT)**: We use MIT for the client SDK to allow maximum flexibility for developers integrating with LAPLACE Event Bridge in their applications, including proprietary software.
+- **SDK package (MIT)**: I use MIT for the client SDK to allow maximum flexibility for developers integrating with LAPLACE Event Bridge in their applications, including proprietary software.
 
 ## Questions?
 
