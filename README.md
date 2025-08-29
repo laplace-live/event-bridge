@@ -20,7 +20,7 @@ This repository contains multiple packages:
 
 ## Requirements
 
-- [Bun](https://bun.sh/) v1.2.0 or higher (required for managing the monorepo and running the SDK / Bun server)
+- [Bun](https://bun.com/) v1.2.0 or higher (required for managing the monorepo and running the SDK / Bun server)
 - [Go](https://golang.org/) 1.20 or higher (only if you want to build/run the Go server from source)
 
 ## Installation

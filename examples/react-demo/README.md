@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/92e07ddf-ec87-439f-a8b3-55c2407f36d4
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) v1.2.10 or later
+- [Bun](https://bun.com) v1.2.10 or later
 
 ## Installation
 

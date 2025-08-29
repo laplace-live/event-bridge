@@ -20,7 +20,7 @@ The event bridge enables various use cases:
 
 ## Requirements
 
-- [Bun](https://bun.sh/) v1.0.0 or higher
+- [Bun](https://bun.com/) v1.0.0 or higher
 
 ## Installation
 
