@@ -45,7 +45,7 @@
     },
     "packages/sdk": {
       "name": "@laplace.live/event-bridge-sdk",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.12",
       },
@@ -55,7 +55,7 @@
     },
     "packages/server-bun": {
       "name": "@laplace.live/event-bridge-server",
-      "version": "0.3.2",
+      "version": "0.3.4",
       "dependencies": {
         "@laplace.live/event-types": "^2.0.4",
       },
