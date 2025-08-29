@@ -45,7 +45,7 @@ go run ./packages/server --debug
 # Or build a native binary
 cd packages/server
 go build -o leb-server .
-./leb-server --auth "your-secure-token" --host 0.0.0.0
+./leb-server --host 0.0.0.0 --auth "your-secure-token"
 ```
 
 The server listens on `http://localhost:9696` by default.
