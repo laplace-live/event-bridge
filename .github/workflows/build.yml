@@ -35,7 +35,7 @@ jobs:
           echo "release_tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
 
@@ -100,7 +100,7 @@ jobs:
           echo "release_tag=${{ github.event.client_payload.tag }}" >> $GITHUB_OUTPUT
 
       - name: Setup Go (for Windows build)
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: stable
 
