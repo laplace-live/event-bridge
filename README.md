@@ -27,10 +27,34 @@ This repository contains multiple packages:
 
 You can run the server in different methods:
 
+- Pre-compiled binaries (easiest for non-technical users)
 - Go server (easy to deploy, recommended)
 - `laplace-event-fetcher` bridge mode (recommended for stability)
 - Bun server (deprecated, only for reference)
 - Source code (for advanced users and developers)
+
+### Pre-compiled Binaries
+
+If you're not familiar with programming or command-line tools, the easiest way to run the LAPLACE Event Bridge server is to download a pre-compiled binary from our GitHub releases:
+
+1. **Download the server**
+   - Go to the [GitHub Releases page](https://github.com/laplace-live/event-bridge/releases)
+   - Find the latest release with `@laplace.live/event-bridge-server` in the name
+   - Download the appropriate file for your operating system:
+     - **Windows**: `leb-server-windows-amd64.exe`
+     - **macOS**: `leb-server-darwin-arm64`
+     - **Linux**: `leb-server-linux-amd64`
+
+2. **Make it executable (macOS/Linux only):**
+   - Open Terminal
+   - Navigate to your Downloads folder: `cd ~/Downloads`
+   - Run: `chmod +x leb-server-*` (replace \* with your actual filename)
+
+3. **Run the server:**
+   - **Windows**: Double-click the `.exe` file
+   - **macOS/Linux**: In Terminal, run: `./leb-server-darwin-arm64` (replace with your actual filename)
+
+The server will start and display a message when it's ready to accept connections.
 
 ### Bridge Server (Go)
 
