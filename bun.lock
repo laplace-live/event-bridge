@@ -47,7 +47,7 @@
       "name": "@laplace.live/event-bridge-sdk",
       "version": "1.0.5",
       "dependencies": {
-        "@laplace.live/event-types": "^2.0.12",
+        "@laplace.live/event-types": "^2.0.13",
       },
       "devDependencies": {
         "bun-types": "latest",
