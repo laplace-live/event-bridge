@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.6
+
+### Patch Changes
+
+- f6af4d9: Update event parser
+
 ## 1.0.5
 
 ### Patch Changes
