@@ -20,7 +20,7 @@
     "cli:demo": "bun run --cwd examples/cli-demo start"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
+    "@biomejs/biome": "^2.2.5",
     "@changesets/cli": "^2.29.7",
     "@laplace.live/event-types": "^2.0.13",
     "prettier": "^3.6.2"
