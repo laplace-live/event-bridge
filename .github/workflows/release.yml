@@ -50,7 +50,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # https://github.com/changesets/changesets/issues/1152
           NPM_TOKEN: ""
-          NPM_CONFIG_PROVENANCE: true
 
       - name: Check if server package was published
         if: steps.changesets.outputs.published == 'true'
