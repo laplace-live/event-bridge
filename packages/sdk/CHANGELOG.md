@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.8
+
+### Patch Changes
+
+- 828f963: migrate to npm trusted publisher with oidc
+
 ## 1.0.7
 
 ### Patch Changes
