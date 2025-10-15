@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.9
+
+### Patch Changes
+
+- 1597fc5: fix oidc
+
 ## 1.0.8
 
 ### Patch Changes
