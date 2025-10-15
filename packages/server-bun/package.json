@@ -15,6 +15,10 @@
     "build": "bun build ./index.ts --outdir ./dist --target node --minify --sourcemap",
     "prepublishOnly": "bun run build"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "@laplace.live/event-types": "^2.0.4"
   },

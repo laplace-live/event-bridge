@@ -25,6 +25,10 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "@laplace.live/event-types": "^2.0.13"
   },
