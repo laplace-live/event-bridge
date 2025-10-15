@@ -8,6 +8,11 @@ on:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  # https://docs.npmjs.com/trusted-publishers
+  id-token: write
+  contents: read
+
 jobs:
   release:
     name: Release
