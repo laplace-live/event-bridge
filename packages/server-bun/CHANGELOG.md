@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.7
+
+### Patch Changes
+
+- 08f01ed: add provenance config
+
 ## 0.3.6
 
 ### Patch Changes

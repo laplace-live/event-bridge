@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.10
+
+### Patch Changes
+
+- 08f01ed: add provenance config
+
 ## 1.0.9
 
 ### Patch Changes
