@@ -114,7 +114,7 @@ jobs:
 
       - name: Sign Windows binary with Trusted Signing
         if: github.event_name == 'release' || github.event_name == 'repository_dispatch'
-        uses: azure/trusted-signing-action@v0
+        uses: azure/trusted-signing-action@v1
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
