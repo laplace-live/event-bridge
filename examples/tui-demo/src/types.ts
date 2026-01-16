@@ -39,6 +39,28 @@ export interface RoomMaps {
 }
 
 // ============================================================================
+// Event filter configuration
+// ============================================================================
+
+export interface EventFilters {
+  showInteractions: boolean
+  showMessages: boolean
+  showSuperchats: boolean
+  showGifts: boolean
+  showEntryEffects: boolean
+  showSystem: boolean
+}
+
+export const DEFAULT_EVENT_FILTERS: EventFilters = {
+  showInteractions: false, // Off by default
+  showMessages: true,
+  showSuperchats: true,
+  showGifts: true,
+  showEntryEffects: true,
+  showSystem: true,
+}
+
+// ============================================================================
 // CLI types
 // ============================================================================
 
@@ -77,3 +99,16 @@ export interface EstablishedEvent {
  * Extended event type to include internal events like 'established'
  */
 export type ExtendedEvent = LaplaceEvent | EstablishedEvent
+
+// ============================================================================
+// Persisted configuration
+// ============================================================================
+
+/**
+ * Configuration that gets persisted to disk
+ */
+export interface PersistedConfig {
+  eventFilters: EventFilters
+  // Streamer filters are stored by roomId (more stable than array index)
+  disabledStreamers: number[]
+}

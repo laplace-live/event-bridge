@@ -1,4 +1,7 @@
 #!/usr/bin/env bun
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { ConnectionState, LaplaceEventBridgeClient } from '@laplace.live/event-bridge-sdk'
 import type { LaplaceEvent } from '@laplace.live/event-types'
 import {
@@ -13,15 +16,55 @@ import {
 import { createRoot } from '@opentui/react'
 import { useCallback, useEffect, useState } from 'react'
 
-import type {
-  CliOptions,
-  EstablishedEvent,
-  ExtendedEvent,
-  FormattedEvent,
-  InfoResponse,
-  RoomInfo,
-  RoomMaps,
+import {
+  type CliOptions,
+  DEFAULT_EVENT_FILTERS,
+  type EstablishedEvent,
+  type EventFilters,
+  type ExtendedEvent,
+  type FormattedEvent,
+  type InfoResponse,
+  type PersistedConfig,
+  type RoomInfo,
+  type RoomMaps,
 } from './types'
+
+// ============================================================================
+// Config persistence
+// ============================================================================
+
+const CONFIG_DIR = join(homedir(), '.config', 'laplace-tui')
+const CONFIG_FILE = join(CONFIG_DIR, 'config.json')
+
+/**
+ * Load persisted config from disk
+ */
+function loadConfig(): PersistedConfig | null {
+  try {
+    if (existsSync(CONFIG_FILE)) {
+      const data = readFileSync(CONFIG_FILE, 'utf-8')
+      return JSON.parse(data) as PersistedConfig
+    }
+  } catch (err) {
+    console.warn('Failed to load config:', err)
+  }
+  return null
+}
+
+/**
+ * Save config to disk
+ */
+function saveConfig(config: PersistedConfig): void {
+  try {
+    // Ensure config directory exists
+    if (!existsSync(CONFIG_DIR)) {
+      mkdirSync(CONFIG_DIR, { recursive: true })
+    }
+    writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8')
+  } catch (err) {
+    console.warn('Failed to save config:', err)
+  }
+}
 
 // ============================================================================
 // Room info helpers
@@ -278,22 +321,108 @@ interface AppProps {
   options: CliOptions
   renderer: Awaited<ReturnType<typeof createCliRenderer>>
   roomMaps: RoomMaps
+  initialConfig: PersistedConfig | null
 }
 
-function App({ client, renderer, roomMaps }: AppProps) {
+function App({ client, renderer, roomMaps, initialConfig }: AppProps) {
   const [events, setEvents] = useState<FormattedEvent[]>([])
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
   const [scrollOffset, setScrollOffset] = useState(0)
   const [autoScroll, setAutoScroll] = useState(true)
   const [, setShowLogs] = useState(false)
+  const [showConfig, setShowConfig] = useState(false)
+
+  // Initialize event filters from persisted config or defaults
+  const [eventFilters, setEventFilters] = useState<EventFilters>(() => {
+    return initialConfig?.eventFilters ?? DEFAULT_EVENT_FILTERS
+  })
+
+  const [configSelectedIdx, setConfigSelectedIdx] = useState(0)
+
+  // Streamer filters: Set of enabled origin indices
+  // Initialize from persisted config (disabled streamers stored by roomId)
+  const [enabledStreamers, setEnabledStreamers] = useState<Set<number>>(() => {
+    const allStreamers = new Set(roomMaps.byIdx.keys())
+    if (initialConfig?.disabledStreamers) {
+      // Convert disabled roomIds back to origin indices
+      for (const roomId of initialConfig.disabledStreamers) {
+        // Find the originIdx for this roomId
+        for (const [idx, _name] of roomMaps.byIdx.entries()) {
+          const storedRoomId = [...roomMaps.byRoomId.entries()].find(([, n]) => n === roomMaps.byIdx.get(idx))?.[0]
+          if (storedRoomId === roomId) {
+            allStreamers.delete(idx)
+            break
+          }
+        }
+      }
+    }
+    return allStreamers
+  })
+
+  // Save config when filters change
+  useEffect(() => {
+    // Convert disabled streamer indices to roomIds for persistence
+    const disabledStreamers: number[] = []
+    for (const [idx, _name] of roomMaps.byIdx.entries()) {
+      if (!enabledStreamers.has(idx)) {
+        // Find the roomId for this idx
+        const roomId = [...roomMaps.byRoomId.entries()].find(([, n]) => n === roomMaps.byIdx.get(idx))?.[0]
+        if (roomId !== undefined) {
+          disabledStreamers.push(roomId)
+        }
+      }
+    }
+
+    const config: PersistedConfig = {
+      eventFilters,
+      disabledStreamers,
+    }
+    saveConfig(config)
+  }, [eventFilters, enabledStreamers, roomMaps])
 
   // Calculate visible area
   const visibleHeight = renderer.height - 6 // Account for header and footer
   const maxEvents = 1000 // Keep last N events
 
-  // Calculate total content height
-  const totalLines = events.reduce((sum, e) => sum + e.lines.length, 0)
-  const maxScroll = Math.max(0, totalLines - visibleHeight)
+  // Filter events based on event type configuration
+  const shouldShowEventType = useCallback(
+    (type: string): boolean => {
+      switch (type) {
+        case 'interaction':
+          return eventFilters.showInteractions
+        case 'message':
+          return eventFilters.showMessages
+        case 'superchat':
+          return eventFilters.showSuperchats
+        case 'gift':
+          return eventFilters.showGifts
+        case 'entry-effect':
+          return eventFilters.showEntryEffects
+        case 'system':
+        case 'established':
+          return eventFilters.showSystem
+        default:
+          return true
+      }
+    },
+    [eventFilters]
+  )
+
+  // Filter events based on streamer (origin)
+  const shouldShowStreamer = useCallback(
+    (originIdx?: number): boolean => {
+      // System events without origin are always shown
+      if (originIdx === undefined) return true
+      // Check if this streamer is enabled
+      return enabledStreamers.has(originIdx)
+    },
+    [enabledStreamers]
+  )
+
+  // Get filtered events and calculate scroll bounds
+  const filteredEvents = events.filter(e => shouldShowEventType(e.type) && shouldShowStreamer(e.originIdx))
+  const filteredTotalLines = filteredEvents.reduce((sum, e) => sum + e.lines.length, 0)
+  const maxScroll = Math.max(0, filteredTotalLines - visibleHeight)
 
   // Subscribe to events
   useEffect(() => {
@@ -337,9 +466,91 @@ function App({ client, renderer, roomMaps }: AppProps) {
     }
   }, [autoScroll, maxScroll])
 
+  // Config filter options for keyboard navigation
+  type ConfigOption =
+    | { type: 'header'; label: string }
+    | { type: 'eventFilter'; key: keyof EventFilters; label: string }
+    | { type: 'streamer'; originIdx: number; label: string }
+
+  const configOptions: ConfigOption[] = [
+    { type: 'header', label: '── Event Types ──' },
+    { type: 'eventFilter', key: 'showMessages', label: 'Messages' },
+    { type: 'eventFilter', key: 'showInteractions', label: 'Interactions (enter/follow/share)' },
+    { type: 'eventFilter', key: 'showSuperchats', label: 'Superchats' },
+    { type: 'eventFilter', key: 'showGifts', label: 'Gifts' },
+    { type: 'eventFilter', key: 'showEntryEffects', label: 'Entry Effects' },
+    { type: 'eventFilter', key: 'showSystem', label: 'System Messages' },
+    { type: 'header', label: '── Streamers ──' },
+    // Add streamers from roomMaps
+    ...Array.from(roomMaps.byIdx.entries()).map(([idx, name]) => ({
+      type: 'streamer' as const,
+      originIdx: idx,
+      label: name,
+    })),
+  ]
+
+  // Get only selectable options (non-headers) for navigation
+  const selectableOptions = configOptions.filter(opt => opt.type !== 'header')
+
+  // Toggle a specific event filter
+  const toggleEventFilter = useCallback((key: keyof EventFilters) => {
+    setEventFilters(prev => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  // Toggle a specific streamer
+  const toggleStreamer = useCallback((originIdx: number) => {
+    setEnabledStreamers(prev => {
+      const next = new Set(prev)
+      if (next.has(originIdx)) {
+        next.delete(originIdx)
+      } else {
+        next.add(originIdx)
+      }
+      return next
+    })
+  }, [])
+
   // Keyboard handling
   useEffect(() => {
     const handleKeypress = (key: KeyEvent) => {
+      // Toggle config with 'c' key
+      if (key.name === 'c' && !showConfig) {
+        setShowConfig(true)
+        setConfigSelectedIdx(0)
+        return
+      }
+
+      // Close config with Escape or 'c'
+      if (showConfig && (key.name === 'escape' || key.name === 'c')) {
+        setShowConfig(false)
+        return
+      }
+
+      // Config dialog navigation
+      if (showConfig) {
+        if (key.name === 'up' || key.name === 'k') {
+          setConfigSelectedIdx(prev => Math.max(0, prev - 1))
+          return
+        }
+        if (key.name === 'down' || key.name === 'j') {
+          setConfigSelectedIdx(prev => Math.min(selectableOptions.length - 1, prev + 1))
+          return
+        }
+        if (key.name === 'space' || key.name === 'return') {
+          const option = selectableOptions[configSelectedIdx]
+          if (option) {
+            if (option.type === 'eventFilter') {
+              toggleEventFilter(option.key)
+            } else if (option.type === 'streamer') {
+              toggleStreamer(option.originIdx)
+            }
+          }
+          return
+        }
+        // Block other keys when config is open
+        return
+      }
+
       // Toggle logs with 'l' key
       if (key.name === 'l') {
         setShowLogs(prev => !prev)
@@ -409,7 +620,17 @@ function App({ client, renderer, roomMaps }: AppProps) {
     return () => {
       renderer.keyInput.off('keypress', handleKeypress)
     }
-  }, [renderer, client, maxScroll, visibleHeight])
+  }, [
+    renderer,
+    client,
+    maxScroll,
+    visibleHeight,
+    showConfig,
+    configSelectedIdx,
+    selectableOptions,
+    toggleEventFilter,
+    toggleStreamer,
+  ])
 
   // Mouse scroll handler for the main content area
   const handleMouseScroll = useCallback(
@@ -437,7 +658,7 @@ function App({ client, renderer, roomMaps }: AppProps) {
   const getVisibleContent = useCallback(() => {
     const allLines: { text: string; type: string; guardType?: number }[] = []
 
-    for (const event of events) {
+    for (const event of filteredEvents) {
       for (const line of event.lines) {
         allLines.push({ text: line, type: event.type, guardType: event.guardType })
       }
@@ -448,7 +669,7 @@ function App({ client, renderer, roomMaps }: AppProps) {
     const endIdx = Math.min(allLines.length, startIdx + visibleHeight)
 
     return allLines.slice(startIdx, endIdx)
-  }, [events, scrollOffset, visibleHeight])
+  }, [filteredEvents, scrollOffset, visibleHeight])
 
   const visibleLines = getVisibleContent()
 
@@ -544,12 +765,74 @@ function App({ client, renderer, roomMaps }: AppProps) {
         justifyContent='space-between'
         width='100%'
       >
-        <text content={t`Events: ${events.length} | Lines: ${totalLines}`} fg='#888888' />
+        <text
+          content={t`Events: ${filteredEvents.length}/${events.length} | Lines: ${filteredTotalLines}`}
+          fg='#888888'
+        />
         <text
           content={t`${autoScroll ? fg('#00FF00')('AUTO-SCROLL') : fg('#888888')(`Scroll: ${scrollOffset}/${maxScroll}`)}`}
         />
-        <text content={t`[↑↓/jk] Scroll [PgUp/Dn] Page [Home/End] Jump [L] Logs [Q] Quit`} fg='#666666' />
+        <text content={t`[↑↓/jk] Scroll [C] Config [L] Logs [Q] Quit`} fg='#666666' />
       </box>
+
+      {/* Configuration Dialog Overlay */}
+      {showConfig && (
+        <box
+          position='absolute'
+          top={Math.max(2, Math.floor(renderer.height / 2) - Math.floor((configOptions.length + 5) / 2))}
+          left={Math.floor(renderer.width / 2) - 25}
+          width={50}
+          height={Math.min(renderer.height - 4, configOptions.length + 5)}
+          borderStyle='double'
+          borderColor='#4488FF'
+          backgroundColor='#1a1a1a'
+          flexDirection='column'
+          paddingLeft={1}
+          paddingRight={1}
+          overflow='hidden'
+        >
+          <text content={t`Filters`} fg='#4488FF' attributes={TextAttributes.BOLD} />
+          <text content={t`─────────────────────────────────────────────`} fg='#333333' />
+          {(() => {
+            let selectableIdx = -1
+            return configOptions.map(option => {
+              if (option.type === 'header') {
+                // Header row (non-selectable)
+                return <text key={`header-${option.label}`} content={t`${option.label}`} fg='#4488FF' />
+              }
+
+              selectableIdx++
+              const isSelected = selectableIdx === configSelectedIdx
+
+              if (option.type === 'eventFilter') {
+                const isEnabled = eventFilters[option.key]
+                const checkbox = isEnabled ? '[✓]' : '[ ]'
+                const prefix = isSelected ? '▶ ' : '  '
+                const color = isSelected ? '#FFFFFF' : '#888888'
+                return <text key={option.key} content={t`${prefix}${checkbox} ${option.label}`} fg={color} />
+              }
+
+              if (option.type === 'streamer') {
+                const isEnabled = enabledStreamers.has(option.originIdx)
+                const checkbox = isEnabled ? '[✓]' : '[ ]'
+                const prefix = isSelected ? '▶ ' : '  '
+                const color = isSelected ? '#FFFFFF' : '#888888'
+                return (
+                  <text
+                    key={`streamer-${option.originIdx}`}
+                    content={t`${prefix}${checkbox} ${option.label}`}
+                    fg={color}
+                  />
+                )
+              }
+
+              return null
+            })
+          })()}
+          <text content={t`─────────────────────────────────────────────`} fg='#333333' />
+          <text content={t`[↑↓] Navigate  [Space] Toggle  [Esc] Close`} fg='#666666' />
+        </box>
+      )}
     </box>
   )
 }
@@ -571,6 +854,11 @@ async function main() {
       startInDebugMode: false,
     },
   })
+
+  // Load persisted config
+  const initialConfig = loadConfig()
+  console.log(`Config file: ${CONFIG_FILE}`)
+  console.log(`Config loaded: ${initialConfig ? 'yes' : 'no (using defaults)'}`)
 
   // Log startup info
   console.log('LAPLACE Event Bridge TUI')
@@ -602,7 +890,9 @@ async function main() {
 
   // Start renderer and mount app
   renderer.start()
-  createRoot(renderer).render(<App client={client} options={options} renderer={renderer} roomMaps={roomMaps} />)
+  createRoot(renderer).render(
+    <App client={client} options={options} renderer={renderer} roomMaps={roomMaps} initialConfig={initialConfig} />
+  )
 }
 
 main().catch(err => {
