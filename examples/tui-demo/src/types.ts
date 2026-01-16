@@ -84,6 +84,7 @@ export interface FormattedEvent {
   type: string
   guardType?: number // 0=none, 1=Governor, 2=Admiral, 3=Captain
   originIdx?: number // Index into rooms array for room lookup
+  priceNormalized?: number // Price in CNY for superchats/gifts
 }
 
 /**

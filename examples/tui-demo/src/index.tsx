@@ -223,6 +223,7 @@ function formatEvent(event: ExtendedEvent, roomMaps: RoomMaps): FormattedEvent {
   const lines: string[] = []
   let guardType: number | undefined
   let originIdx: number | undefined
+  let priceNormalized: number | undefined
 
   // Handle established event first (internal event type)
   if (event.type === 'established') {
@@ -284,12 +285,14 @@ function formatEvent(event: ExtendedEvent, roomMaps: RoomMaps): FormattedEvent {
 
     case 'superchat':
       guardType = laplaceEvent.guardType
+      priceNormalized = laplaceEvent.priceNormalized
       lines.push(
         `${formatTimestamp(timestamp)} ${streamerPrefix} [SC ¥${laplaceEvent.priceNormalized}] ${laplaceEvent.username}: ${laplaceEvent.message}`
       )
       break
 
     case 'gift':
+      priceNormalized = laplaceEvent.priceNormalized
       lines.push(
         `${formatTimestamp(timestamp)} ${streamerPrefix} [Gift ¥${laplaceEvent.priceNormalized}] ${laplaceEvent.username}: ${laplaceEvent.message}`
       )
@@ -309,7 +312,7 @@ function formatEvent(event: ExtendedEvent, roomMaps: RoomMaps): FormattedEvent {
       return { id, timestamp, lines: [], type: laplaceEvent.type }
   }
 
-  return { id, timestamp, lines, type: laplaceEvent.type, guardType, originIdx }
+  return { id, timestamp, lines, type: laplaceEvent.type, guardType, originIdx, priceNormalized }
 }
 
 // ============================================================================
@@ -656,11 +659,16 @@ function App({ client, renderer, roomMaps, initialConfig }: AppProps) {
 
   // Get visible lines
   const getVisibleContent = useCallback(() => {
-    const allLines: { text: string; type: string; guardType?: number }[] = []
+    const allLines: { text: string; type: string; guardType?: number; priceNormalized?: number }[] = []
 
     for (const event of filteredEvents) {
       for (const line of event.lines) {
-        allLines.push({ text: line, type: event.type, guardType: event.guardType })
+        allLines.push({
+          text: line,
+          type: event.type,
+          guardType: event.guardType,
+          priceNormalized: event.priceNormalized,
+        })
       }
     }
 
@@ -688,9 +696,22 @@ function App({ client, renderer, roomMaps, initialConfig }: AppProps) {
     }
   }
 
+  // Get superchat/gift color based on price
+  // Price levels: 1=¥30-50, 2=¥50-100, 3=¥100-500, 4=¥500-1000, 5=¥1000-2000, 6=¥2000+
+  const getPriceColor = (price?: number): string => {
+    if (price === undefined) return '#FFD700' // Default gold
+    if (price >= 2000) return '#8B0000' // Level 6: dark red
+    if (price >= 1000) return '#FF0000' // Level 5: red
+    if (price >= 500) return '#FF6600' // Level 4: orange
+    if (price >= 100) return '#FFBF00' // Level 3: amber
+    if (price >= 50) return '#00CC00' // Level 2: green
+    if (price >= 30) return '#4488FF' // Level 1: blue
+    return '#FFD700' // Below ¥30: default gold
+  }
+
   // Event type color based on type and guard level
   // Guard levels: 0=none, 1=Governor(总督), 2=Admiral(提督), 3=Captain(舰长)
-  const getTypeColor = (type: string, guardType?: number) => {
+  const getTypeColor = (type: string, guardType?: number, priceNormalized?: number) => {
     switch (type) {
       case 'message':
         // Color based on guard level (1 is highest)
@@ -707,7 +728,7 @@ function App({ client, renderer, roomMaps, initialConfig }: AppProps) {
       case 'interaction':
         return '#666666'
       case 'superchat':
-        return '#FFD700'
+        return getPriceColor(priceNormalized)
       case 'gift':
         return '#FF69B4'
       case 'entry-effect':
@@ -750,7 +771,11 @@ function App({ client, renderer, roomMaps, initialConfig }: AppProps) {
           <text content='Waiting for events...' fg='#666666' />
         ) : (
           visibleLines.map((line, idx) => (
-            <text key={`line-${scrollOffset + idx}`} content={line.text} fg={getTypeColor(line.type, line.guardType)} />
+            <text
+              key={`line-${scrollOffset + idx}`}
+              content={line.text}
+              fg={getTypeColor(line.type, line.guardType, line.priceNormalized)}
+            />
           ))
         )}
       </box>
