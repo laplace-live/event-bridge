@@ -13,23 +13,76 @@ import {
 import { createRoot } from '@opentui/react'
 import { useCallback, useEffect, useState } from 'react'
 
+import type {
+  CliOptions,
+  EstablishedEvent,
+  ExtendedEvent,
+  FormattedEvent,
+  InfoResponse,
+  RoomInfo,
+  RoomMaps,
+} from './types'
+
+// ============================================================================
+// Room info helpers
+// ============================================================================
+
+/**
+ * Fetch room info from the /info endpoint
+ * Converts WS URL to HTTP URL and fetches /info
+ */
+async function fetchRoomInfo(wsUrl: string): Promise<RoomMaps> {
+  const roomMaps: RoomMaps = {
+    byIdx: new Map(),
+    byRoomId: new Map(),
+  }
+
+  try {
+    // Convert ws:// or wss:// to http:// or https:// and strip token
+    const url = new URL(wsUrl.replace(/^ws/, 'http'))
+    url.searchParams.delete('token')
+    url.pathname = `${url.pathname.replace(/\/$/, '')}/info`
+    const httpUrl = url.toString()
+
+    console.log(`Fetching room info from: ${httpUrl}`)
+
+    const response = await fetch(httpUrl)
+    if (!response.ok) {
+      console.warn(`Failed to fetch room info: ${response.status} ${response.statusText}`)
+      return roomMaps
+    }
+
+    const data = (await response.json()) as InfoResponse
+
+    if (data.success && data.data?.rooms && Array.isArray(data.data.rooms)) {
+      const rooms = data.data.rooms
+      rooms.forEach((baseRoom, idx: number) => {
+        const room = baseRoom as RoomInfo
+        // API returns 'username' field for streamer name
+        const streamerName = room.username
+        if (streamerName) {
+          // Map by array index (for originIdx lookup)
+          roomMaps.byIdx.set(idx, streamerName)
+          // Map by roomId (for origin lookup fallback)
+          roomMaps.byRoomId.set(room.roomId, streamerName)
+        }
+      })
+      console.log(`Loaded ${roomMaps.byIdx.size} room(s) info:`, [...roomMaps.byIdx.entries()])
+    }
+  } catch (err) {
+    console.warn('Failed to fetch room info:', err)
+  }
+
+  return roomMaps
+}
+
 // ============================================================================
 // Argument parsing (no external libs)
 // ============================================================================
 
-interface CliOptions {
-  url: string
-  token: string
-  reconnect: boolean
-  interval: number
-  attempts: number
-  help: boolean
-}
-
 function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = {
     url: 'ws://localhost:9696',
-    token: 'laplace',
     reconnect: true,
     interval: 3000,
     attempts: 10,
@@ -94,7 +147,7 @@ Usage: bun run src/index.tsx [options]
 
 Options:
   -u, --url <url>         WebSocket URL (default: ws://localhost:9696)
-  -t, --token <token>     Authentication token (default: laplace)
+  -t, --token <token>     Authentication token
   -r, --reconnect         Enable auto-reconnect (default: true)
   --no-reconnect          Disable auto-reconnect
   -i, --interval <ms>     Reconnect interval in ms (default: 3000)
@@ -115,34 +168,18 @@ if (options.help) {
 // Event formatting helpers
 // ============================================================================
 
-interface FormattedEvent {
-  id: string
-  timestamp: number
-  lines: string[]
-  type: string
-  guardType?: number // 0=none, 1=Governor, 2=Admiral, 3=Captain
-}
-
 function formatTimestamp(ts?: number): string {
   const now = ts ? new Date(ts) : new Date()
   return `[${now.toLocaleTimeString()}]`
 }
 
-// Extended event type to include internal events like 'established'
-interface EstablishedEvent {
-  type: 'established'
-  clientId: string
-  version: string
-}
-
-type ExtendedEvent = LaplaceEvent | EstablishedEvent
-
-function formatEvent(event: ExtendedEvent): FormattedEvent {
+function formatEvent(event: ExtendedEvent, roomMaps: RoomMaps): FormattedEvent {
   const timestamp = 'timestampNormalized' in event ? event.timestampNormalized : Date.now()
   const id = 'id' in event ? String(event.id) : `${event.type}-${timestamp}`
 
   const lines: string[] = []
   let guardType: number | undefined
+  let originIdx: number | undefined
 
   // Handle established event first (internal event type)
   if (event.type === 'established') {
@@ -154,12 +191,38 @@ function formatEvent(event: ExtendedEvent): FormattedEvent {
   // Cast to LaplaceEvent for type safety
   const laplaceEvent = event as LaplaceEvent
 
+  // Get originIdx and streamer name for events that have it
+  if ('originIdx' in laplaceEvent) {
+    originIdx = laplaceEvent.originIdx
+  }
+
+  // Get streamer name from room maps with fallback:
+  // 1. Try originIdx (array index) first
+  // 2. Try roomId (origin field) as fallback
+  // 3. Fall back to showing the raw origin value
+  const getStreamerPrefix = () => {
+    // First try: lookup by originIdx (array index)
+    if (originIdx !== undefined && roomMaps.byIdx.has(originIdx)) {
+      return `[${roomMaps.byIdx.get(originIdx)}]`
+    }
+    // Second try: lookup by roomId (origin field)
+    if ('origin' in laplaceEvent) {
+      const origin = laplaceEvent.origin
+      if (typeof origin === 'number' && roomMaps.byRoomId.has(origin)) {
+        return `[${roomMaps.byRoomId.get(origin)}]`
+      }
+      // Fallback: show the raw origin value
+      return `[${origin}]`
+    }
+    return ''
+  }
+
+  const streamerPrefix = getStreamerPrefix()
+
   switch (laplaceEvent.type) {
     case 'message':
       guardType = laplaceEvent.guardType
-      lines.push(
-        `${formatTimestamp(timestamp)} [${laplaceEvent.origin}] ${laplaceEvent.username}: ${laplaceEvent.message}`
-      )
+      lines.push(`${formatTimestamp(timestamp)} ${streamerPrefix} ${laplaceEvent.username}: ${laplaceEvent.message}`)
       break
 
     case 'interaction': {
@@ -171,7 +234,7 @@ function formatEvent(event: ExtendedEvent): FormattedEvent {
         5: 'mutual followed',
       }
       lines.push(
-        `${formatTimestamp(timestamp)} ${laplaceEvent.username} ${actionMap[laplaceEvent.action] || `action ${laplaceEvent.action}`}`
+        `${formatTimestamp(timestamp)} ${streamerPrefix} ${laplaceEvent.username} ${actionMap[laplaceEvent.action] || `action ${laplaceEvent.action}`}`
       )
       break
     }
@@ -179,23 +242,23 @@ function formatEvent(event: ExtendedEvent): FormattedEvent {
     case 'superchat':
       guardType = laplaceEvent.guardType
       lines.push(
-        `${formatTimestamp(timestamp)} [SC ¥${laplaceEvent.priceNormalized}] ${laplaceEvent.username}: ${laplaceEvent.message}`
+        `${formatTimestamp(timestamp)} ${streamerPrefix} [SC ¥${laplaceEvent.priceNormalized}] ${laplaceEvent.username}: ${laplaceEvent.message}`
       )
       break
 
     case 'gift':
       lines.push(
-        `${formatTimestamp(timestamp)} [Gift ¥${laplaceEvent.priceNormalized}] ${laplaceEvent.username}: ${laplaceEvent.message}`
+        `${formatTimestamp(timestamp)} ${streamerPrefix} [Gift ¥${laplaceEvent.priceNormalized}] ${laplaceEvent.username}: ${laplaceEvent.message}`
       )
       break
 
     case 'entry-effect':
       guardType = laplaceEvent.guardType
-      lines.push(`${formatTimestamp(timestamp)} [Entry] ${laplaceEvent.message}`)
+      lines.push(`${formatTimestamp(timestamp)} ${streamerPrefix} [Entry] ${laplaceEvent.message}`)
       break
 
     case 'system':
-      lines.push(`${formatTimestamp(timestamp)} [System] ${laplaceEvent.message}`)
+      lines.push(`${formatTimestamp(timestamp)} ${streamerPrefix} [System] ${laplaceEvent.message}`)
       break
 
     default:
@@ -203,7 +266,7 @@ function formatEvent(event: ExtendedEvent): FormattedEvent {
       return { id, timestamp, lines: [], type: laplaceEvent.type }
   }
 
-  return { id, timestamp, lines, type: laplaceEvent.type, guardType }
+  return { id, timestamp, lines, type: laplaceEvent.type, guardType, originIdx }
 }
 
 // ============================================================================
@@ -214,9 +277,10 @@ interface AppProps {
   client: LaplaceEventBridgeClient
   options: CliOptions
   renderer: Awaited<ReturnType<typeof createCliRenderer>>
+  roomMaps: RoomMaps
 }
 
-function App({ client, renderer }: AppProps) {
+function App({ client, renderer, roomMaps }: AppProps) {
   const [events, setEvents] = useState<FormattedEvent[]>([])
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED)
   const [scrollOffset, setScrollOffset] = useState(0)
@@ -234,7 +298,7 @@ function App({ client, renderer }: AppProps) {
   // Subscribe to events
   useEffect(() => {
     const handleEvent = (event: LaplaceEvent) => {
-      const formatted = formatEvent(event)
+      const formatted = formatEvent(event, roomMaps)
       // Skip events with no displayable lines (unknown types)
       if (formatted.lines.length === 0) return
 
@@ -264,7 +328,7 @@ function App({ client, renderer }: AppProps) {
       client.offAny(handleEvent)
       client.offConnectionStateChange(handleStateChange)
     }
-  }, [client])
+  }, [client, roomMaps])
 
   // Auto-scroll when new events arrive (maxScroll changes when events change)
   useEffect(() => {
@@ -517,10 +581,12 @@ async function main() {
   console.log(`Interval: ${options.interval}ms`)
   console.log(`Max attempts: ${options.attempts}`)
 
+  // Fetch room info from /info endpoint
+  const roomMaps = await fetchRoomInfo(options.url)
+
   // Create the event bridge client
   const client = new LaplaceEventBridgeClient({
     url: options.url,
-    token: options.token,
     reconnect: options.reconnect,
     reconnectInterval: options.interval,
     maxReconnectAttempts: options.attempts,
@@ -536,7 +602,7 @@ async function main() {
 
   // Start renderer and mount app
   renderer.start()
-  createRoot(renderer).render(<App client={client} options={options} renderer={renderer} />)
+  createRoot(renderer).render(<App client={client} options={options} renderer={renderer} roomMaps={roomMaps} />)
 }
 
 main().catch(err => {
