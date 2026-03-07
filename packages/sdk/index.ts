@@ -157,7 +157,7 @@ export class LaplaceEventBridgeClient {
               })()
 
               console.log(
-                `Welcome to LAPLACE Event Bridge ${`v${data.version}` || '(unknown version)'}: ${displayUrl} with client ID ${this.clientId || 'unknown'}`
+                `Welcome to LAPLACE Event Bridge ${data.version ? `v${data.version}` : '(unknown version)'}: ${displayUrl} with client ID ${this.clientId || 'unknown'}`
               )
 
               // Start ping monitoring if server version supports it (>= 4.0.2)
