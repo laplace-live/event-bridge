@@ -103,9 +103,9 @@ enum ConnectionState {
 
 - `connect()`: Connect to the event bridge. Returns a Promise that resolves when connected.
 - `disconnect()`: Disconnect from the event bridge.
-- `on(eventType, handler)`: Register an event handler for a specific event type with automatic type inference.
-- `onAny(handler)`: Register a handler for all events.
-- `onConnectionStateChange(handler)`: Register a handler for connection state changes.
+- `on(eventType, handler)`: Register an event handler for a specific event type with automatic type inference. Returns an unsubscribe function.
+- `onAny(handler)`: Register a handler for all events. Returns an unsubscribe function.
+- `onConnectionStateChange(handler)`: Register a handler for connection state changes. Returns an unsubscribe function.
 - `off(eventType, handler)`: Remove an event handler for a specific event type.
 - `offAny(handler)`: Remove a handler for all events.
 - `offConnectionStateChange(handler)`: Remove a connection state change handler.

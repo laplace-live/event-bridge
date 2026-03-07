@@ -248,29 +248,35 @@ export class LaplaceEventBridgeClient {
    * Register an event handler for a specific event type
    * @param eventType The event type to listen for
    * @param handler The handler function to call when the event is received
+   * @returns A function that removes the handler when called
    */
-  public on<T extends LaplaceEventTypes>(eventType: T, handler: (event: EventTypeMap[T]) => void): void {
+  public on<T extends LaplaceEventTypes>(eventType: T, handler: (event: EventTypeMap[T]) => void): () => void {
     const handlers = this.eventHandlers.get(eventType) || []
     handlers.push(handler)
     this.eventHandlers.set(eventType, handlers)
+    return () => this.off(eventType, handler)
   }
 
   /**
    * Register a handler for all events
    * @param handler The handler function to call for any event
+   * @returns A function that removes the handler when called
    */
-  public onAny(handler: AnyEventHandler): void {
+  public onAny(handler: AnyEventHandler): () => void {
     this.anyEventHandlers.push(handler)
+    return () => this.offAny(handler)
   }
 
   /**
    * Register a handler for connection state changes
    * @param handler The handler function to call when the connection state changes
+   * @returns A function that removes the handler when called
    */
-  public onConnectionStateChange(handler: ConnectionStateChangeHandler): void {
+  public onConnectionStateChange(handler: ConnectionStateChangeHandler): () => void {
     this.connectionStateHandlers.push(handler)
     // Immediately call with current state to initialize
     handler(this.connectionState)
+    return () => this.offConnectionStateChange(handler)
   }
 
   /**
