@@ -9,7 +9,7 @@
     "examples/*"
   ],
   "scripts": {
-    "changeset": "changeset",
+    "changesets:publish": "changeset publish",
     "dev:server": "bun run --cwd packages/server dev",
     "start:server": "bun run --cwd packages/server start",
     "build:sdk": "bun run --cwd packages/sdk build",
