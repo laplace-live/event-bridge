@@ -9,7 +9,6 @@
     "examples/*"
   ],
   "scripts": {
-    "changesets:publish": "changeset publish",
     "dev:server": "bun run --cwd packages/server dev",
     "start:server": "bun run --cwd packages/server start",
     "build:sdk": "bun run --cwd packages/sdk build",
@@ -17,7 +16,9 @@
     "prepublish": "bun run build:all",
     "publish:sdk": "bun run --cwd packages/sdk publish",
     "dev:vue-demo": "bun run --cwd examples/vue-demo dev",
-    "cli:demo": "bun run --cwd examples/cli-demo start"
+    "cli:demo": "bun run --cwd examples/cli-demo start",
+    "version": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
