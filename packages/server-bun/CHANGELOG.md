@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.8
+
+### Patch Changes
+
+- 20c7cd2: try update npm
+
 ## 0.3.7
 
 ### Patch Changes
