@@ -7,7 +7,11 @@
   "module": "index.ts",
   "main": "index.ts",
   "types": "index.ts",
-  "repository": "laplace-live/event-bridge",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laplace-live/event-bridge.git",
+    "directory": "packages/server-bun"
+  },
   "homepage": "https://chat.laplace.live",
   "scripts": {
     "start": "bun run index.ts",

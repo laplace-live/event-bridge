@@ -8,7 +8,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/laplace-live/event-bridge.git",
+    "url": "git+https://github.com/laplace-live/event-bridge.git",
     "directory": "packages/sdk"
   },
   "homepage": "https://chat.laplace.live",
