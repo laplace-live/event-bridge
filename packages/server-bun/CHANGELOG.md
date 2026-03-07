@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.16
+
+### Patch Changes
+
+- 2430a1b: fix npm provenance
+
 ## 0.3.15
 
 ### Patch Changes
