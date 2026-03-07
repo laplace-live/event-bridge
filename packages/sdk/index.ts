@@ -14,7 +14,6 @@ export type EventTypeMap = {
 }
 
 export type EventHandler<T extends LaplaceEvent> = (event: T) => void
-export type EventTypeHandler = (event: LaplaceEvent) => void
 export type AnyEventHandler = (event: LaplaceEvent) => void
 export type ConnectionStateChangeHandler = (state: ConnectionState) => void
 
