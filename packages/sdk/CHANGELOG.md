@@ -1,5 +1,12 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.11
+
+### Patch Changes
+
+- 20c7cd2: try update npm
+- 8453165: Update deps
+
 ## 1.0.10
 
 ### Patch Changes
