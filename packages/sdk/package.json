@@ -6,7 +6,11 @@
   "types": "index.ts",
   "license": "MIT",
   "type": "module",
-  "repository": "laplace-live/event-bridge",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/laplace-live/event-bridge.git",
+    "directory": "packages/sdk"
+  },
   "homepage": "https://chat.laplace.live",
   "scripts": {
     "build": "bun build index.ts --outdir dist --target browser --minify",
