@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.14
+
+### Patch Changes
+
+- f6f3920: fix npm provenance
+
 ## 1.0.13
 
 ### Patch Changes
