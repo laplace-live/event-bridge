@@ -16,7 +16,7 @@
     "@laplace.live/event-bridge-sdk": "workspace:*",
     "@laplace.live/event-types": "^2.0.14",
     "@laplace.live/internal": "^1.2.18",
-    "@opentui/core": "^0.1.73",
+    "@opentui/core": "^0.1.99",
     "@opentui/react": "^0.1.73",
     "react": "^19.2.3"
   }
