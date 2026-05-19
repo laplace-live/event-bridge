@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.0.23
+
+### Patch Changes
+
+- 98ff2fb: update sdk
+
 ## 1.0.22
 
 ### Patch Changes
