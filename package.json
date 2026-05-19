@@ -23,7 +23,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@changesets/cli": "^2.31.0",
-    "@laplace.live/event-types": "^2.0.17",
+    "@laplace.live/event-types": "^2.0.18",
     "prettier": "^3.8.3"
   }
 }
