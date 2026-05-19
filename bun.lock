@@ -34,7 +34,7 @@
         "motion": "^12.23.12",
         "react": "^19.2.5",
         "react-dom": "^19.1.1",
-        "tailwind-merge": "^3.3.1",
+        "tailwind-merge": "^3.6.0",
         "tailwindcss": "^4.1.12",
         "zustand": "^5.0.8",
       },
@@ -63,9 +63,9 @@
     },
     "packages/sdk": {
       "name": "@laplace.live/event-bridge-sdk",
-      "version": "1.0.22",
+      "version": "1.0.24",
       "dependencies": {
-        "@laplace.live/event-types": "^2.0.17",
+        "@laplace.live/event-types": "^2.0.18",
       },
       "devDependencies": {
         "bun-types": "latest",
@@ -522,7 +522,7 @@
 
     "strtok3": ["strtok3@6.3.0", "", { "dependencies": { "@tokenizer/token": "^0.3.0", "peek-readable": "^4.1.0" } }, "sha512-fZtbhtvI9I48xDSywd/somNqgUHl2L2cstmXCCif0itOf96jeW18MBSyrLuNicYQVkvpOxkZtkzujiTJ9LW5Jw=="],
 
-    "tailwind-merge": ["tailwind-merge@3.3.1", "", {}, "sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g=="],
+    "tailwind-merge": ["tailwind-merge@3.6.0", "", {}, "sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w=="],
 
     "tailwindcss": ["tailwindcss@4.1.12", "", {}, "sha512-DzFtxOi+7NsFf7DBtI3BJsynR+0Yp6etH+nRPTbpWnS2pZBaSksv/JGctNwSWzbFjp0vxSqknaUylseZqMDGrA=="],
 
