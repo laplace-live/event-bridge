@@ -21,9 +21,9 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
-    "@changesets/cli": "^2.30.0",
-    "@laplace.live/event-types": "^2.0.14",
-    "prettier": "^3.8.2"
+    "@biomejs/biome": "^2.4.15",
+    "@changesets/cli": "^2.31.0",
+    "@laplace.live/event-types": "^2.0.17",
+    "prettier": "^3.8.3"
   }
 }

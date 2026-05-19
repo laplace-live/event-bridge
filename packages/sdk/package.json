@@ -34,7 +34,7 @@
     "provenance": true
   },
   "dependencies": {
-    "@laplace.live/event-types": "^2.0.14"
+    "@laplace.live/event-types": "^2.0.17"
   },
   "devDependencies": {
     "bun-types": "latest"
