@@ -143,25 +143,12 @@ import { fetchInfo } from '@laplace.live/event-bridge-sdk'
 const info = await fetchInfo({ url: 'ws://localhost:9696', token, signal })
 ```
 
-Both resolve to `null` (never throw) when `/info` is unavailable — an old fetcher, a plain Event Bridge server, an aborted request, or any network/parse error — so callers can silently fall back to manual room entry. The returned shapes are `FetcherInfo` and `FetcherRoom`:
+Both resolve to `null` (never throw) when `/info` is unavailable — an old fetcher, a plain Event Bridge server, an aborted request, or any network/parse error — so callers can silently fall back to manual room entry.
+
+The returned shapes are `FetcherInfo` and `FetcherRoom`. Both are exported from the SDK, so import them directly rather than redeclaring your own:
 
 ```typescript
-interface FetcherRoom {
-  status: number // 0 = resolved, else an error code (e.g. 404)
-  uid: number
-  roomId: number // canonical room id; matches the `origin` field on events
-  shortRoomId: number
-  username: string | null
-}
-
-interface FetcherInfo {
-  version: string
-  uptime: string
-  connectedAt: number
-  websocketBridge: boolean
-  websocketClients: number
-  rooms: FetcherRoom[]
-}
+import type { FetcherInfo, FetcherRoom } from '@laplace.live/event-bridge-sdk'
 ```
 
 ## Type Inference
