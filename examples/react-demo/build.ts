@@ -1,151 +1,126 @@
 #!/usr/bin/env bun
 
-// This script is not working at the moment
-import { existsSync } from 'node:fs'
-import { rm } from 'node:fs/promises'
-import path from 'node:path'
-import plugin from 'bun-plugin-tailwind'
+/**
+ * Compiles the react-demo into standalone single-file executables — one binary
+ * per target that embeds the Bun runtime, the server, and the fully-bundled
+ * React SPA (HTML/JS/CSS). The result needs no `bun install`, no node_modules,
+ * and no separate dist at runtime: just run the binary and it serves the app.
+ *
+ * Why the JS API and not `bun build --compile` (the CLI)?
+ *
+ *   src/index.tsx imports ./index.html, which makes Bun kick off a full-stack
+ *   frontend build and embed the assets. That frontend build must run
+ *   bun-plugin-tailwind to turn `@import 'tailwindcss'` / `@apply` into real
+ *   CSS. Per Bun's docs, `[serve.static]` plugins are "not yet supported in the
+ *   CLI" — they only run through `Bun.build()`'s JS API. Compiling via the CLI
+ *   therefore ships the SPA without styles, which is why the old scripts/build
+ *   never worked. Passing `plugins: [tailwind]` here is the fix.
+ */
 
-if (process.argv.includes('--help') || process.argv.includes('-h')) {
+import { mkdir, rm } from 'node:fs/promises'
+import tailwind from 'bun-plugin-tailwind'
+
+interface Target {
+  /** Short key used on the CLI, e.g. `bun run build.ts darwin-arm64` */
+  key: string
+  /** Bun cross-compilation target */
+  target: Bun.Build.CompileTarget
+  /** Output path for the produced executable */
+  outfile: string
+}
+
+const OUTDIR = 'dist'
+const NAME = 'leb-react-demo'
+
+// x64/windows use the `-modern` (Haswell, 2013+) variant for speed. If you hit
+// "Illegal instruction" on older CPUs, swap to the `-baseline` variant.
+const TARGETS: Target[] = [
+  { key: 'darwin-arm64', target: 'bun-darwin-arm64', outfile: `${OUTDIR}/${NAME}-darwin-arm64` },
+  { key: 'linux-x64', target: 'bun-linux-x64-modern', outfile: `${OUTDIR}/${NAME}-linux-x64` },
+  { key: 'linux-arm64', target: 'bun-linux-arm64', outfile: `${OUTDIR}/${NAME}-linux-arm64` },
+  { key: 'windows-x64', target: 'bun-windows-x64-modern', outfile: `${OUTDIR}/${NAME}-windows-x64.exe` },
+]
+
+const args = process.argv.slice(2)
+
+if (args.includes('--help') || args.includes('-h')) {
   console.log(`
-🏗️  Bun Build Script
+🏗️  Build standalone single-file executables for the react-demo
 
-Usage: bun run build.ts [options]
+Usage: bun run build.ts [target...]
 
-Common Options:
-  --outdir <path>          Output directory (default: "dist")
-  --minify                 Enable minification (or --minify.whitespace, --minify.syntax, etc)
-  --sourcemap <type>      Sourcemap type: none|linked|inline|external
-  --target <target>        Build target: browser|bun|node
-  --format <format>        Output format: esm|cjs|iife
-  --splitting              Enable code splitting
-  --packages <type>        Package handling: bundle|external
-  --public-path <path>     Public path for assets
-  --env <mode>             Environment handling: inline|disable|prefix*
-  --conditions <list>      Package.json export conditions (comma separated)
-  --external <list>        External packages (comma separated)
-  --banner <text>          Add banner text to output
-  --footer <text>          Add footer text to output
-  --define <obj>           Define global constants (e.g. --define.VERSION=1.0.0)
-  --help, -h               Show this help message
+With no targets it builds all of them; otherwise it builds only the listed keys.
 
-Example:
-  bun run build.ts --outdir=dist --minify --sourcemap=linked --external=react,react-dom
+Targets:
+${TARGETS.map(t => `  ${t.key.padEnd(13)} →  ${t.target}`).join('\n')}
+
+Examples:
+  bun run build.ts                  # all targets
+  bun run build.ts darwin-arm64     # just macOS arm64
 `)
   process.exit(0)
 }
 
-const toCamelCase = (str: string): string => str.replace(/-([a-z])/g, g => g[1].toUpperCase())
-
-const parseValue = (value: string): any => {
-  if (value === 'true') return true
-  if (value === 'false') return false
-
-  if (/^\d+$/.test(value)) return parseInt(value, 10)
-  if (/^\d*\.\d+$/.test(value)) return parseFloat(value)
-
-  if (value.includes(',')) return value.split(',').map(v => v.trim())
-
-  return value
+const requested = args.filter(a => !a.startsWith('-'))
+const unknown = requested.filter(r => !TARGETS.some(t => t.key === r))
+if (unknown.length) {
+  console.error(`❌ Unknown target(s): ${unknown.join(', ')}`)
+  console.error(`   Valid keys: ${TARGETS.map(t => t.key).join(', ')}`)
+  process.exit(1)
 }
 
-function parseArgs(): Partial<Bun.BuildConfig> {
-  const config: Partial<Bun.BuildConfig> = {}
-  const args = process.argv.slice(2)
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-    if (arg === undefined) continue
-    if (!arg.startsWith('--')) continue
-
-    if (arg.startsWith('--no-')) {
-      const key = toCamelCase(arg.slice(5))
-      config[key] = false
-      continue
-    }
-
-    if (!arg.includes('=') && (i === args.length - 1 || args[i + 1]?.startsWith('--'))) {
-      const key = toCamelCase(arg.slice(2))
-      config[key] = true
-      continue
-    }
-
-    let key: string
-    let value: string
-
-    if (arg.includes('=')) {
-      ;[key, value] = arg.slice(2).split('=', 2) as [string, string]
-    } else {
-      key = arg.slice(2)
-      value = args[++i] ?? ''
-    }
-
-    key = toCamelCase(key)
-
-    if (key.includes('.')) {
-      const [parentKey, childKey] = key.split('.')
-      config[parentKey] = config[parentKey] || {}
-      config[parentKey][childKey] = parseValue(value)
-    } else {
-      config[key] = parseValue(value)
-    }
-  }
-
-  return config
-}
+const selected = requested.length ? TARGETS.filter(t => requested.includes(t.key)) : TARGETS
 
 const formatFileSize = (bytes: number): string => {
   const units = ['B', 'KB', 'MB', 'GB']
   let size = bytes
   let unitIndex = 0
-
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024
     unitIndex++
   }
-
   return `${size.toFixed(2)} ${units[unitIndex]}`
 }
 
-console.log('\n🚀 Starting build process...\n')
+console.log(`\n🚀 Compiling ${selected.length} target${selected.length === 1 ? '' : 's'}...\n`)
 
-const cliConfig = parseArgs()
-const outdir = cliConfig.outdir || path.join(process.cwd(), 'dist')
-
-if (existsSync(outdir)) {
-  console.log(`🗑️ Cleaning previous build at ${outdir}`)
-  await rm(outdir, { recursive: true, force: true })
-}
+await mkdir(OUTDIR, { recursive: true })
 
 const start = performance.now()
+const summary: { Target: string; Output: string; Size: string }[] = []
 
-const entrypoints = [...new Bun.Glob('**.html').scanSync('src')]
-  .map(a => path.resolve('src', a))
-  .filter(dir => !dir.includes('node_modules'))
-console.log(`📄 Found ${entrypoints.length} HTML ${entrypoints.length === 1 ? 'file' : 'files'} to process\n`)
+for (const t of selected) {
+  await rm(t.outfile, { force: true })
 
-const result = await Bun.build({
-  entrypoints,
-  outdir,
-  plugins: [plugin],
-  minify: true,
-  target: 'browser',
-  sourcemap: 'linked',
-  define: {
-    'process.env.NODE_ENV': JSON.stringify('production'),
-  },
-  ...cliConfig,
-})
+  const result = await Bun.build({
+    entrypoints: ['./src/index.tsx'],
+    compile: {
+      target: t.target,
+      outfile: t.outfile,
+    },
+    plugins: [tailwind],
+    minify: true,
+    sourcemap: 'linked',
+    define: {
+      'process.env.NODE_ENV': JSON.stringify('production'),
+    },
+  })
 
-const end = performance.now()
+  if (!result.success) {
+    console.error(`\n❌ Failed to build ${t.key}:`)
+    for (const log of result.logs) console.error(log)
+    process.exit(1)
+  }
 
-const outputTable = result.outputs.map(output => ({
-  File: path.relative(process.cwd(), output.path),
-  Type: output.kind,
-  Size: formatFileSize(output.size),
-}))
+  summary.push({
+    Target: t.target,
+    Output: t.outfile,
+    Size: formatFileSize(Bun.file(t.outfile).size),
+  })
+  console.log(`✅ ${t.key.padEnd(13)} → ${t.outfile}`)
+}
 
-console.table(outputTable)
-const buildTime = (end - start).toFixed(2)
+const buildTime = ((performance.now() - start) / 1000).toFixed(2)
 
-console.log(`\n✅ Build completed in ${buildTime}ms\n`)
+console.table(summary)
+console.log(`\n✅ Built ${selected.length} executable${selected.length === 1 ? '' : 's'} in ${buildTime}s\n`)

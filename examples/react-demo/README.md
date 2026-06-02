@@ -44,20 +44,40 @@ bun start
 NODE_ENV=production bun src/index.tsx
 ```
 
-## Build
+## Build (single-file executable)
 
-Build the application for deployment:
+Compile the demo into standalone single-file executables. Each binary embeds the
+Bun runtime, the server, and the fully-bundled React SPA (HTML/JS/CSS) — no
+`bun install`, `node_modules`, or separate assets are needed to run it.
 
 ```bash
 bun run build
 ```
 
-The build script supports various options:
+This produces one executable per target in `dist/`:
 
-- `--outdir <path>` - Output directory (default: "dist")
-- `--minify` - Enable minification
-- `--sourcemap <type>` - Sourcemap type (none|linked|inline|external)
-- `--help` - Show all available options
+- `leb-react-demo-darwin-arm64` — macOS (Apple Silicon)
+- `leb-react-demo-linux-x64` — Linux x64
+- `leb-react-demo-linux-arm64` — Linux arm64
+- `leb-react-demo-windows-x64.exe` — Windows x64
+
+To build only specific targets, pass their keys (run with `--help` to list them):
+
+```bash
+bun run build.ts darwin-arm64            # just macOS arm64
+bun run build.ts linux-x64 linux-arm64   # a couple of Linux targets
+```
+
+Run a binary directly; it serves the app on port 4000, or set `PORT` to override:
+
+```bash
+./dist/leb-react-demo-darwin-arm64
+PORT=8080 ./dist/leb-react-demo-darwin-arm64
+```
+
+> The build uses Bun's `Bun.build()` JS API (see `build.ts`) rather than the
+> `bun build --compile` CLI, because Tailwind (`bun-plugin-tailwind`) only runs
+> for the embedded frontend build through the JS API.
 
 ## Development Notes
 
