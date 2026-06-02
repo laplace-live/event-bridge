@@ -117,7 +117,7 @@ enum ConnectionState {
 
 ## Room Discovery
 
-When the server is a [LAPLACE Event Fetcher](https://chat.laplace.live) in bridge mode, it exposes a `/info` HTTP endpoint listing the configured rooms. The SDK can fetch it without an active WebSocket connection — useful for letting users pick which rooms to receive.
+When the server is a [LAPLACE Event Fetcher](https://subspace.institute/docs/laplace-chat/event-fetcher) in bridge mode, it exposes a `/info` HTTP endpoint listing the configured rooms. The SDK can fetch it without an active WebSocket connection — useful for letting users pick which rooms to receive.
 
 Use the `client.getInfo()` method (reuses the client's `url`/`token`):
 
