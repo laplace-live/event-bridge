@@ -5,8 +5,7 @@
   "description": "LAPLACE Event Bridge Monorepo",
   "type": "module",
   "workspaces": [
-    "packages/*",
-    "examples/*"
+    "packages/*"
   ],
   "scripts": {
     "dev:server": "bun run --cwd packages/server dev",
@@ -21,7 +20,7 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
+    "@biomejs/biome": "^2.4.16",
     "@changesets/cli": "^2.31.0",
     "@laplace.live/event-types": "^2.0.18",
     "prettier": "^3.8.3"

@@ -8,6 +8,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@opentui/react",
     "allowJs": true,
+    "types": ["bun"],
 
     // Bundler mode
     "moduleResolution": "bundler",
