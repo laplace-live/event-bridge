@@ -9,6 +9,19 @@ const client = new LaplaceEventBridgeClient({
   maxReconnectAttempts: 5,
 })
 
+// Discover which rooms the server exposes (LAPLACE Event Fetcher /info).
+// Resolves to null on a plain Event Bridge server or an older fetcher.
+client.getInfo().then(info => {
+  if (info) {
+    console.log(`Fetcher v${info.version} exposes ${info.rooms.length} room(s):`)
+    for (const room of info.rooms) {
+      console.log(`  - ${room.username ?? `Room ${room.roomId}`} (${room.roomId})`)
+    }
+  } else {
+    console.log('Room discovery not available; rooms must be entered manually.')
+  }
+})
+
 // Connect to the LAPLACE Event Bridge
 client
   .connect()

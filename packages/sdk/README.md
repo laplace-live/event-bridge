@@ -112,7 +112,57 @@ enum ConnectionState {
 - `isConnectedToBridge()`: Check if the client is connected to the bridge. (Deprecated: use `getConnectionState()` instead)
 - `getConnectionState()`: Get the current connection state.
 - `getClientId()`: Get the client ID assigned by the bridge.
+- `getInfo(signal?)`: Fetch `/info` (configured rooms + instance metadata) from a LAPLACE Event Fetcher, using the client's url/token. No active connection required. Resolves to `null` when discovery is unsupported.
 - `send(event)`: Send an event to the bridge.
+
+## Room Discovery
+
+When the server is a [LAPLACE Event Fetcher](https://chat.laplace.live) in bridge mode, it exposes a `/info` HTTP endpoint listing the configured rooms. The SDK can fetch it without an active WebSocket connection — useful for letting users pick which rooms to receive.
+
+Use the `client.getInfo()` method (reuses the client's `url`/`token`):
+
+```typescript
+const client = new LaplaceEventBridgeClient({ url: 'ws://localhost:9696', token })
+
+const info = await client.getInfo()
+if (info) {
+  console.log(`Fetcher v${info.version} exposes ${info.rooms.length} room(s)`)
+  for (const room of info.rooms) {
+    console.log(`${room.roomId}: ${room.username ?? 'unknown'}`)
+  }
+} else {
+  // Plain Event Bridge server or an older fetcher — fall back to manual entry.
+}
+```
+
+Or the standalone `fetchInfo()` function (no client object needed):
+
+```typescript
+import { fetchInfo } from '@laplace.live/event-bridge-sdk'
+
+const info = await fetchInfo({ url: 'ws://localhost:9696', token, signal })
+```
+
+Both resolve to `null` (never throw) when `/info` is unavailable — an old fetcher, a plain Event Bridge server, an aborted request, or any network/parse error — so callers can silently fall back to manual room entry. The returned shapes are `FetcherInfo` and `FetcherRoom`:
+
+```typescript
+interface FetcherRoom {
+  status: number // 0 = resolved, else an error code (e.g. 404)
+  uid: number
+  roomId: number // canonical room id; matches the `origin` field on events
+  shortRoomId: number
+  username: string | null
+}
+
+interface FetcherInfo {
+  version: string
+  uptime: string
+  connectedAt: number
+  websocketBridge: boolean
+  websocketClients: number
+  rooms: FetcherRoom[]
+}
+```
 
 ## Type Inference
 
