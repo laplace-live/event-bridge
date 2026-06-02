@@ -63,6 +63,41 @@ export interface ConnectionOptions {
   pingTimeout?: number
 }
 
+export interface FetcherRoom {
+  /** 0 when the room was resolved, otherwise an error code (e.g. 404). */
+  status: number
+  uid: number
+  /** Canonical room id. Matches the `origin` field on incoming events. */
+  roomId: number
+  shortRoomId: number
+  username: string | null
+}
+
+export interface FetcherInfo {
+  version: string
+  uptime: string
+  connectedAt: number
+  websocketBridge: boolean
+  websocketClients: number
+  rooms: FetcherRoom[]
+}
+
+export interface FetchInfoOptions {
+  /** Same ws/wss URL style as ConnectionOptions.url, e.g. 'ws://localhost:9696'. */
+  url: string
+  /** Auth token; sent as `Authorization: Bearer <token>` when present. */
+  token?: string
+  /** Optional AbortSignal for cancellation (e.g. a modal closing). */
+  signal?: AbortSignal
+}
+
+/** The `/info` response envelope. Internal — callers receive the unwrapped `data` (FetcherInfo). */
+interface FetcherInfoResponse {
+  success: boolean
+  status: number
+  data: FetcherInfo
+}
+
 export class LaplaceEventBridgeClient {
   private ws: WebSocket | null = null
   private eventHandlers = new Map<string, EventHandler<any>[]>()
@@ -346,6 +381,17 @@ export class LaplaceEventBridgeClient {
   }
 
   /**
+   * Fetch `/info` (configured rooms + instance metadata) from the connected
+   * LAPLACE Event Fetcher, using this client's configured url and token. Does
+   * NOT require connect(). Resolves to null when discovery is unsupported (a
+   * plain Event Bridge server or an older fetcher) — see {@link fetchInfo}.
+   * @param signal Optional AbortSignal to cancel the request.
+   */
+  public getInfo(signal?: AbortSignal): Promise<FetcherInfo | null> {
+    return fetchInfo({ url: this.options.url, token: this.options.token, signal })
+  }
+
+  /**
    * Send an event to the bridge
    * @param event The event to send
    */
@@ -465,5 +511,81 @@ export class LaplaceEventBridgeClient {
       clearInterval(this.pingMonitorTimer)
       this.pingMonitorTimer = null
     }
+  }
+}
+
+/**
+ * Convert a ws/wss URL to the http/https URL of the same endpoint so we can
+ * reach HTTP routes like `/info`. Swaps the scheme (wss→https, ws→http) and
+ * preserves host, port, and any path (so a fetcher reverse-proxied under a
+ * sub-path still resolves). http(s) URLs pass through; a bare host with no
+ * scheme defaults to http, or https when it targets port 443. Any trailing
+ * slash is stripped so callers can append a path.
+ */
+function wsToHttp(url: string): string {
+  let httpUrl: string
+  if (url.startsWith('wss://')) {
+    httpUrl = `https://${url.slice('wss://'.length)}`
+  } else if (url.startsWith('ws://')) {
+    httpUrl = `http://${url.slice('ws://'.length)}`
+  } else if (url.startsWith('http://') || url.startsWith('https://')) {
+    httpUrl = url
+  } else {
+    httpUrl = `${/:443(\/|$)/.test(url) ? 'https' : 'http'}://${url}`
+  }
+  // Strip trailing slashes so callers can append a path. A linear scan rather
+  // than `/\/+$/` — that pattern backtracks polynomially on a long slash run
+  // (a user-entered fetcher URL is uncontrolled input) and trips ReDoS scanners.
+  let end = httpUrl.length
+  while (end > 0 && httpUrl.charCodeAt(end - 1) === 47 /* '/' */) {
+    end--
+  }
+  return httpUrl.slice(0, end)
+}
+
+/**
+ * Fetch instance/room info from a LAPLACE Event Fetcher `/info` endpoint.
+ *
+ * Returns `null` (never throws) whenever the info cannot be determined: an old
+ * fetcher without `/info`, a plain Event Bridge server, an aborted request, or
+ * any network/HTTP/parse error. Callers should treat `null` as "not supported"
+ * and fall back to manual entry.
+ *
+ * @example
+ * const info = await fetchInfo({ url: 'ws://localhost:9696', token })
+ * info?.rooms.forEach(room => console.log(room.roomId, room.username))
+ */
+export async function fetchInfo(options: FetchInfoOptions): Promise<FetcherInfo | null> {
+  const { url, token, signal } = options
+  if (!url) {
+    return null
+  }
+
+  try {
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers.authorization = `Bearer ${token}`
+    }
+
+    const response = await fetch(`${wsToHttp(url)}/info`, {
+      method: 'GET',
+      headers,
+      signal,
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    const json = (await response.json()) as FetcherInfoResponse
+    if (!json?.success || !Array.isArray(json?.data?.rooms)) {
+      return null
+    }
+
+    return json.data
+  } catch {
+    // Silent fallback: old fetcher without /info, plain Event Bridge server,
+    // aborted request, network failure, or a non-JSON response.
+    return null
   }
 }
