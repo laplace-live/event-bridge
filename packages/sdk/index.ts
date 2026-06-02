@@ -381,6 +381,17 @@ export class LaplaceEventBridgeClient {
   }
 
   /**
+   * Fetch `/info` (configured rooms + instance metadata) from the connected
+   * LAPLACE Event Fetcher, using this client's configured url and token. Does
+   * NOT require connect(). Resolves to null when discovery is unsupported (a
+   * plain Event Bridge server or an older fetcher) — see {@link fetchInfo}.
+   * @param signal Optional AbortSignal to cancel the request.
+   */
+  public getInfo(signal?: AbortSignal): Promise<FetcherInfo | null> {
+    return fetchInfo({ url: this.options.url, token: this.options.token, signal })
+  }
+
+  /**
    * Send an event to the bridge
    * @param event The event to send
    */

@@ -382,3 +382,34 @@ describe('fetchInfo', () => {
     expect(await fetchInfo({ url: 'ws://localhost:9696', signal: controller.signal })).toBeNull()
   })
 })
+
+describe('client.getInfo', () => {
+  const realFetch = globalThis.fetch
+
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  test('fetches /info using the client url and token without connecting', async () => {
+    const data = {
+      version: '4.0.20',
+      uptime: '',
+      connectedAt: 0,
+      websocketBridge: true,
+      websocketClients: 0,
+      rooms: [],
+    }
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) =>
+      new Response(JSON.stringify({ success: true, status: 200, data }), { status: 200 })
+    )
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    const client = new LaplaceEventBridgeClient({ url: 'wss://example.com', token: 'tok' })
+    const info = await client.getInfo()
+
+    expect(spy.mock.calls[0]![0]).toBe('https://example.com/info')
+    const init = spy.mock.calls[0]![1] as RequestInit
+    expect((init.headers as Record<string, string>).authorization).toBe('Bearer tok')
+    expect(info?.rooms).toEqual([])
+  })
+})
