@@ -6,7 +6,7 @@ import { ConnectionState, fetchInfo, LaplaceEventBridgeClient } from './index'
 const isAIAgent = process.env.CLAUDECODE === '1' || process.env.REPL_ID === '1' || process.env.AGENT === '1'
 
 // Helper to conditionally log based on AI agent environment
-const log = (...args: any[]) => {
+const log = (...args: unknown[]) => {
   if (!isAIAgent) {
     console.log(...args)
   }
@@ -74,10 +74,10 @@ describe('LaplaceEventBridgeClient', () => {
           originalLog(...args)
           const message = args.join(' ')
           const match = message.match(/Attempting to reconnect \((\d+)\/\d+\) in (\d+)ms/)
-          if (match) {
+          if (match?.[1] && match[2]) {
             reconnectTimings.push({
-              attempt: parseInt(match[1]!, 10),
-              scheduledDelay: parseInt(match[2]!, 10),
+              attempt: parseInt(match[1], 10),
+              scheduledDelay: parseInt(match[2], 10),
             })
           }
         })
@@ -227,6 +227,31 @@ describe('LaplaceEventBridgeClient', () => {
   })
 })
 
+// `fetchInfo` only ever sends plain-object headers, so narrow `init` to match.
+// This keeps call-arg reads (`headers.authorization`) cast-free.
+type FetchInit = Omit<RequestInit, 'headers'> & { headers?: Record<string, string> }
+type FetchImpl = (url: string, init?: FetchInit) => Promise<Response>
+
+// Install a typed fake `globalThis.fetch` and return the spy for call assertions.
+// The single unavoidable `as unknown as typeof fetch` lives here, not at every
+// call site. The default impl throws so tests that should never fetch fail loudly.
+const mockFetch = (
+  impl: FetchImpl = async () => {
+    throw new Error('fetch was not expected to be called')
+  }
+) => {
+  const spy = jest.fn(impl)
+  globalThis.fetch = spy as unknown as typeof fetch
+  return spy
+}
+
+// Build a 200 `/info` envelope wrapping `data`.
+const okResponse = (data: unknown) =>
+  new Response(JSON.stringify({ success: true, status: 200, data }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  })
+
 describe('fetchInfo', () => {
   const realFetch = globalThis.fetch
 
@@ -243,93 +268,77 @@ describe('fetchInfo', () => {
     ],
   }
 
-  const okResponse = (data: unknown) =>
-    new Response(JSON.stringify({ success: true, status: 200, data }), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-    })
-
   afterEach(() => {
     globalThis.fetch = realFetch
   })
 
   test('derives an http URL from a ws URL and appends /info', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'ws://localhost:9696' })
 
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+    expect(spy.mock.calls[0]?.[0]).toBe('http://localhost:9696/info')
   })
 
   test('derives an https URL from a wss URL', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'wss://event-fetcher.laplace.cn' })
 
-    expect(spy.mock.calls[0]![0]).toBe('https://event-fetcher.laplace.cn/info')
+    expect(spy.mock.calls[0]?.[0]).toBe('https://event-fetcher.laplace.cn/info')
   })
 
   test('does not double up a trailing slash on the base URL', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'ws://localhost:9696/' })
 
-    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+    expect(spy.mock.calls[0]?.[0]).toBe('http://localhost:9696/info')
   })
 
   test('passes through an http URL unchanged', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'http://localhost:9696' })
 
-    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+    expect(spy.mock.calls[0]?.[0]).toBe('http://localhost:9696/info')
   })
 
   test('passes through an https URL unchanged', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'https://event-fetcher.laplace.cn' })
 
-    expect(spy.mock.calls[0]![0]).toBe('https://event-fetcher.laplace.cn/info')
+    expect(spy.mock.calls[0]?.[0]).toBe('https://event-fetcher.laplace.cn/info')
   })
 
   test('preserves a sub-path for reverse-proxied fetchers', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'wss://example.com/lef/' })
 
-    expect(spy.mock.calls[0]![0]).toBe('https://example.com/lef/info')
+    expect(spy.mock.calls[0]?.[0]).toBe('https://example.com/lef/info')
   })
 
   test('sends an Authorization bearer header when a token is provided', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'ws://localhost:9696', token: 'secret' })
 
-    const init = spy.mock.calls[0]![1] as RequestInit
-    expect((init.headers as Record<string, string>).authorization).toBe('Bearer secret')
+    expect(spy.mock.calls[0]?.[1]?.headers?.authorization).toBe('Bearer secret')
   })
 
   test('omits the Authorization header when no token is provided', async () => {
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(sampleInfo))
 
     await fetchInfo({ url: 'ws://localhost:9696' })
 
-    const init = spy.mock.calls[0]![1] as RequestInit
-    expect((init.headers as Record<string, string>).authorization).toBeUndefined()
+    expect(spy.mock.calls[0]?.[1]?.headers?.authorization).toBeUndefined()
   })
 
   test('returns the data payload on success', async () => {
-    globalThis.fetch = (async () => okResponse(sampleInfo)) as unknown as typeof fetch
+    mockFetch(async () => okResponse(sampleInfo))
 
     const info = await fetchInfo({ url: 'ws://localhost:9696' })
 
@@ -338,8 +347,7 @@ describe('fetchInfo', () => {
   })
 
   test('returns null without fetching when url is empty', async () => {
-    const spy = jest.fn()
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch()
 
     const info = await fetchInfo({ url: '' })
 
@@ -348,42 +356,42 @@ describe('fetchInfo', () => {
   })
 
   test('returns null on a non-ok response (e.g. 403)', async () => {
-    globalThis.fetch = (async () => new Response('', { status: 403 })) as unknown as typeof fetch
+    mockFetch(async () => new Response('', { status: 403 }))
     expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
   })
 
   test('returns null when the envelope success flag is false', async () => {
-    globalThis.fetch = (async () =>
-      new Response(JSON.stringify({ success: false, status: 403, message: 'Unauthorized' }), {
-        status: 200,
-      })) as unknown as typeof fetch
+    mockFetch(
+      async () =>
+        new Response(JSON.stringify({ success: false, status: 403, message: 'Unauthorized' }), { status: 200 })
+    )
     expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
   })
 
   test('returns null when rooms is not an array', async () => {
-    globalThis.fetch = (async () => okResponse({ ...sampleInfo, rooms: undefined })) as unknown as typeof fetch
+    mockFetch(async () => okResponse({ ...sampleInfo, rooms: undefined }))
     expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
   })
 
   test('returns null on a network error', async () => {
-    globalThis.fetch = (async () => {
+    mockFetch(async () => {
       throw new Error('network down')
-    }) as unknown as typeof fetch
+    })
     expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
   })
 
   test('returns null on invalid JSON', async () => {
-    globalThis.fetch = (async () => new Response('not json', { status: 200 })) as unknown as typeof fetch
+    mockFetch(async () => new Response('not json', { status: 200 }))
     expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
   })
 
   test('returns null when the signal is already aborted', async () => {
-    globalThis.fetch = (async (_url: string, init?: RequestInit) => {
+    mockFetch(async (_url, init) => {
       if (init?.signal?.aborted) {
         throw new DOMException('Aborted', 'AbortError')
       }
       return okResponse(sampleInfo)
-    }) as unknown as typeof fetch
+    })
 
     const controller = new AbortController()
     controller.abort()
@@ -408,18 +416,13 @@ describe('client.getInfo', () => {
       websocketClients: 0,
       rooms: [],
     }
-    const spy = jest.fn(
-      async (_url: string, _init?: RequestInit) =>
-        new Response(JSON.stringify({ success: true, status: 200, data }), { status: 200 })
-    )
-    globalThis.fetch = spy as unknown as typeof fetch
+    const spy = mockFetch(async () => okResponse(data))
 
     const client = new LaplaceEventBridgeClient({ url: 'wss://example.com', token: 'tok' })
     const info = await client.getInfo()
 
-    expect(spy.mock.calls[0]![0]).toBe('https://example.com/info')
-    const init = spy.mock.calls[0]![1] as RequestInit
-    expect((init.headers as Record<string, string>).authorization).toBe('Bearer tok')
+    expect(spy.mock.calls[0]?.[0]).toBe('https://example.com/info')
+    expect(spy.mock.calls[0]?.[1]?.headers?.authorization).toBe('Bearer tok')
     expect(info?.rooms).toEqual([])
   })
 })
