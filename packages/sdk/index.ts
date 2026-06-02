@@ -533,7 +533,14 @@ function wsToHttp(url: string): string {
   } else {
     httpUrl = `${/:443(\/|$)/.test(url) ? 'https' : 'http'}://${url}`
   }
-  return httpUrl.replace(/\/+$/, '')
+  // Strip trailing slashes so callers can append a path. A linear scan rather
+  // than `/\/+$/` — that pattern backtracks polynomially on a long slash run
+  // (a user-entered fetcher URL is uncontrolled input) and trips ReDoS scanners.
+  let end = httpUrl.length
+  while (end > 0 && httpUrl.charCodeAt(end - 1) === 47 /* '/' */) {
+    end--
+  }
+  return httpUrl.slice(0, end)
 }
 
 /**
