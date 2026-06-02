@@ -89,7 +89,7 @@ describe('fetchInfo', () => {
   })
 
   test('derives an http URL from a ws URL and appends /info', async () => {
-    const spy = jest.fn(async () => okResponse(sampleInfo))
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
     globalThis.fetch = spy as unknown as typeof fetch
 
     await fetchInfo({ url: 'ws://localhost:9696' })
@@ -99,7 +99,7 @@ describe('fetchInfo', () => {
   })
 
   test('derives an https URL from a wss URL', async () => {
-    const spy = jest.fn(async () => okResponse(sampleInfo))
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
     globalThis.fetch = spy as unknown as typeof fetch
 
     await fetchInfo({ url: 'wss://event-fetcher.laplace.cn' })
@@ -108,7 +108,7 @@ describe('fetchInfo', () => {
   })
 
   test('does not double up a trailing slash on the base URL', async () => {
-    const spy = jest.fn(async () => okResponse(sampleInfo))
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
     globalThis.fetch = spy as unknown as typeof fetch
 
     await fetchInfo({ url: 'ws://localhost:9696/' })
@@ -116,8 +116,26 @@ describe('fetchInfo', () => {
     expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
   })
 
+  test('passes through an http URL unchanged', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'http://localhost:9696' })
+
+    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+  })
+
+  test('preserves a sub-path for reverse-proxied fetchers', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'wss://example.com/lef/' })
+
+    expect(spy.mock.calls[0]![0]).toBe('https://example.com/lef/info')
+  })
+
   test('sends an Authorization bearer header when a token is provided', async () => {
-    const spy = jest.fn(async () => okResponse(sampleInfo))
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
     globalThis.fetch = spy as unknown as typeof fetch
 
     await fetchInfo({ url: 'ws://localhost:9696', token: 'secret' })
@@ -127,7 +145,7 @@ describe('fetchInfo', () => {
   })
 
   test('omits the Authorization header when no token is provided', async () => {
-    const spy = jest.fn(async () => okResponse(sampleInfo))
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
     globalThis.fetch = spy as unknown as typeof fetch
 
     await fetchInfo({ url: 'ws://localhost:9696' })
@@ -287,10 +305,12 @@ Replace with (same code, then the two module-level functions appended after the 
 }
 
 /**
- * Convert a ws/wss URL to its http/https origin (preserving host and port) so we
- * can reach HTTP endpoints like `/info`. http(s) URLs pass through; a bare host
- * with no scheme defaults to http (or https when it targets port 443). Any
- * trailing slash is stripped so callers can append a path.
+ * Convert a ws/wss URL to the http/https URL of the same endpoint so we can
+ * reach HTTP routes like `/info`. Swaps the scheme (wss→https, ws→http) and
+ * preserves host, port, and any path (so a fetcher reverse-proxied under a
+ * sub-path still resolves). http(s) URLs pass through; a bare host with no
+ * scheme defaults to http, or https when it targets port 443. Any trailing
+ * slash is stripped so callers can append a path.
  */
 function wsToHttp(url: string): string {
   let httpUrl: string
@@ -301,7 +321,7 @@ function wsToHttp(url: string): string {
   } else if (url.startsWith('http://') || url.startsWith('https://')) {
     httpUrl = url
   } else {
-    httpUrl = `${url.includes(':443') ? 'https' : 'http'}://${url}`
+    httpUrl = `${/:443(\/|$)/.test(url) ? 'https' : 'http'}://${url}`
   }
   return httpUrl.replace(/\/+$/, '')
 }
@@ -357,13 +377,13 @@ export async function fetchInfo(options: FetchInfoOptions): Promise<FetcherInfo 
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `cd packages/sdk && bun test -t fetchInfo`
-Expected: PASS — 13 tests pass, 0 fail.
+Expected: PASS — 15 tests pass, 0 fail.
 
-- [ ] **Step 6: Verify the public types still typecheck**
+- [ ] **Step 6: Verify the public types and tests typecheck**
 
-Run:
+Run (both files — `noUncheckedIndexedAccess` means mocks inspected via `.mock.calls[0]` need typed params, which the tests above provide):
 ```bash
-cd packages/sdk && bunx tsc --noEmit --skipLibCheck --strict --noUncheckedIndexedAccess --lib esnext,dom --module preserve --moduleResolution bundler --allowImportingTsExtensions --verbatimModuleSyntax index.ts
+cd packages/sdk && bunx tsc --noEmit --skipLibCheck --strict --noUncheckedIndexedAccess --lib esnext,dom --module preserve --moduleResolution bundler --allowImportingTsExtensions --verbatimModuleSyntax index.ts index.test.ts
 ```
 Expected: no output, exit 0.
 
@@ -403,7 +423,7 @@ describe('client.getInfo', () => {
       websocketClients: 0,
       rooms: [],
     }
-    const spy = jest.fn(async () =>
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) =>
       new Response(JSON.stringify({ success: true, status: 200, data }), { status: 200 })
     )
     globalThis.fetch = spy as unknown as typeof fetch
@@ -478,9 +498,9 @@ Expected: PASS — 1 test passes, 0 fail.
 
 Run:
 ```bash
-cd packages/sdk && bunx tsc --noEmit --skipLibCheck --strict --noUncheckedIndexedAccess --lib esnext,dom --module preserve --moduleResolution bundler --allowImportingTsExtensions --verbatimModuleSyntax index.ts && bun test
+cd packages/sdk && bunx tsc --noEmit --skipLibCheck --strict --noUncheckedIndexedAccess --lib esnext,dom --module preserve --moduleResolution bundler --allowImportingTsExtensions --verbatimModuleSyntax index.ts index.test.ts && bun test
 ```
-Expected: tsc — no output, exit 0; `bun test` — all tests pass (the pre-existing 5 + 13 fetchInfo + 1 getInfo = 19), 0 fail. (Full run takes ~30s due to the reconnection test.)
+Expected: tsc — no output, exit 0; `bun test` — all tests pass (the pre-existing 5 + 15 fetchInfo + 1 getInfo = 21), 0 fail. (Full run takes ~30s due to the reconnection test.)
 
 - [ ] **Step 6: Commit**
 
@@ -664,7 +684,7 @@ git commit -m "chore(sdk): add changeset for /info room discovery"
   ```bash
   cd packages/sdk && bun test && bunx tsc --noEmit --skipLibCheck --strict --noUncheckedIndexedAccess --lib esnext,dom --module preserve --moduleResolution bundler --allowImportingTsExtensions --verbatimModuleSyntax index.ts example.ts index.test.ts
   ```
-  Expected: `bun test` → all pass (19 tests), 0 fail; `tsc` → no output, exit 0.
+  Expected: `bun test` → all pass (21 tests), 0 fail; `tsc` → no output, exit 0.
 - [ ] `git log --oneline -4` shows the four commits (feat fetchInfo, feat getInfo, docs, changeset).
 
 ---
