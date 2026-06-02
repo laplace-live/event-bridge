@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test'
 
-import { ConnectionState, LaplaceEventBridgeClient } from './index'
+import { ConnectionState, fetchInfo, LaplaceEventBridgeClient } from './index'
 
 // Detect if running in AI agent environment for cleaner output
 const isAIAgent = process.env.CLAUDECODE === '1' || process.env.REPL_ID === '1' || process.env.AGENT === '1'
@@ -224,5 +224,161 @@ describe('LaplaceEventBridgeClient', () => {
       // indicates that ping monitoring was properly cleaned up
       client.disconnect()
     })
+  })
+})
+
+describe('fetchInfo', () => {
+  const realFetch = globalThis.fetch
+
+  // Minimal valid `/info` payload — the `data` object fetchInfo returns.
+  const sampleInfo = {
+    version: '4.0.20',
+    uptime: '2 hours ago',
+    connectedAt: 1717200000000,
+    websocketBridge: true,
+    websocketClients: 3,
+    rooms: [
+      { status: 0, uid: 2132180406, roomId: 25034104, shortRoomId: 0, username: '明前奶绿' },
+      { status: 404, uid: 0, roomId: 456117, shortRoomId: 0, username: null },
+    ],
+  }
+
+  const okResponse = (data: unknown) =>
+    new Response(JSON.stringify({ success: true, status: 200, data }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  test('derives an http URL from a ws URL and appends /info', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'ws://localhost:9696' })
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+  })
+
+  test('derives an https URL from a wss URL', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'wss://event-fetcher.laplace.cn' })
+
+    expect(spy.mock.calls[0]![0]).toBe('https://event-fetcher.laplace.cn/info')
+  })
+
+  test('does not double up a trailing slash on the base URL', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'ws://localhost:9696/' })
+
+    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+  })
+
+  test('passes through an http URL unchanged', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'http://localhost:9696' })
+
+    expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
+  })
+
+  test('preserves a sub-path for reverse-proxied fetchers', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'wss://example.com/lef/' })
+
+    expect(spy.mock.calls[0]![0]).toBe('https://example.com/lef/info')
+  })
+
+  test('sends an Authorization bearer header when a token is provided', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'ws://localhost:9696', token: 'secret' })
+
+    const init = spy.mock.calls[0]![1] as RequestInit
+    expect((init.headers as Record<string, string>).authorization).toBe('Bearer secret')
+  })
+
+  test('omits the Authorization header when no token is provided', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'ws://localhost:9696' })
+
+    const init = spy.mock.calls[0]![1] as RequestInit
+    expect((init.headers as Record<string, string>).authorization).toBeUndefined()
+  })
+
+  test('returns the data payload on success', async () => {
+    globalThis.fetch = (async () => okResponse(sampleInfo)) as unknown as typeof fetch
+
+    const info = await fetchInfo({ url: 'ws://localhost:9696' })
+
+    expect(info).toEqual(sampleInfo)
+    expect(info?.rooms).toHaveLength(2)
+  })
+
+  test('returns null without fetching when url is empty', async () => {
+    const spy = jest.fn()
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    const info = await fetchInfo({ url: '' })
+
+    expect(info).toBeNull()
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  test('returns null on a non-ok response (e.g. 403)', async () => {
+    globalThis.fetch = (async () => new Response('', { status: 403 })) as unknown as typeof fetch
+    expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
+  })
+
+  test('returns null when the envelope success flag is false', async () => {
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ success: false, status: 403, message: 'Unauthorized' }), {
+        status: 200,
+      })) as unknown as typeof fetch
+    expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
+  })
+
+  test('returns null when rooms is not an array', async () => {
+    globalThis.fetch = (async () => okResponse({ ...sampleInfo, rooms: undefined })) as unknown as typeof fetch
+    expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
+  })
+
+  test('returns null on a network error', async () => {
+    globalThis.fetch = (async () => {
+      throw new Error('network down')
+    }) as unknown as typeof fetch
+    expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
+  })
+
+  test('returns null on invalid JSON', async () => {
+    globalThis.fetch = (async () => new Response('not json', { status: 200 })) as unknown as typeof fetch
+    expect(await fetchInfo({ url: 'ws://localhost:9696' })).toBeNull()
+  })
+
+  test('returns null when the signal is already aborted', async () => {
+    globalThis.fetch = (async (_url: string, init?: RequestInit) => {
+      if (init?.signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError')
+      }
+      return okResponse(sampleInfo)
+    }) as unknown as typeof fetch
+
+    const controller = new AbortController()
+    controller.abort()
+
+    expect(await fetchInfo({ url: 'ws://localhost:9696', signal: controller.signal })).toBeNull()
   })
 })
