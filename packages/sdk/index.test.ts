@@ -290,6 +290,15 @@ describe('fetchInfo', () => {
     expect(spy.mock.calls[0]![0]).toBe('http://localhost:9696/info')
   })
 
+  test('passes through an https URL unchanged', async () => {
+    const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
+    globalThis.fetch = spy as unknown as typeof fetch
+
+    await fetchInfo({ url: 'https://event-fetcher.laplace.cn' })
+
+    expect(spy.mock.calls[0]![0]).toBe('https://event-fetcher.laplace.cn/info')
+  })
+
   test('preserves a sub-path for reverse-proxied fetchers', async () => {
     const spy = jest.fn(async (_url: string, _init?: RequestInit) => okResponse(sampleInfo))
     globalThis.fetch = spy as unknown as typeof fetch
@@ -399,8 +408,9 @@ describe('client.getInfo', () => {
       websocketClients: 0,
       rooms: [],
     }
-    const spy = jest.fn(async (_url: string, _init?: RequestInit) =>
-      new Response(JSON.stringify({ success: true, status: 200, data }), { status: 200 })
+    const spy = jest.fn(
+      async (_url: string, _init?: RequestInit) =>
+        new Response(JSON.stringify({ success: true, status: 200, data }), { status: 200 })
     )
     globalThis.fetch = spy as unknown as typeof fetch
 
