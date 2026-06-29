@@ -23,6 +23,6 @@
     "@biomejs/biome": "^2.5.1",
     "@changesets/cli": "^2.31.0",
     "@laplace.live/event-types": "^2.0.18",
-    "prettier": "^3.8.4"
+    "prettier": "^3.9.1"
   }
 }
