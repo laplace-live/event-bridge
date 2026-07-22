@@ -20,7 +20,7 @@
     "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.4",
+    "@biomejs/biome": "^2.5.5",
     "@changesets/cli": "^2.31.0",
     "@laplace.live/event-types": "^2.0.20",
     "prettier": "^3.8.4"
