@@ -7,7 +7,7 @@
       "devDependencies": {
         "@biomejs/biome": "^2.5.4",
         "@changesets/cli": "^3.0.0",
-        "@laplace.live/event-types": "^2.0.20",
+        "@laplace.live/event-types": "^2.0.21",
         "prettier": "^3.8.4",
       },
     },
@@ -15,7 +15,7 @@
       "name": "@laplace.live/event-bridge-sdk",
       "version": "1.1.0",
       "dependencies": {
-        "@laplace.live/event-types": "^2.0.20",
+        "@laplace.live/event-types": "^2.0.21",
       },
       "devDependencies": {
         "bun-types": "latest",
@@ -25,7 +25,7 @@
       "name": "@laplace.live/event-bridge-server",
       "version": "0.3.19",
       "dependencies": {
-        "@laplace.live/event-types": "^2.0.20",
+        "@laplace.live/event-types": "^2.0.21",
       },
       "devDependencies": {
         "bun-types": "latest",
@@ -52,7 +52,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.4", "", { "os": "win32", "cpu": "x64" }, "sha512-U1jaluLw1qQc2Tx7/CeSoL9N5XcqIH+GWjpUAy1ouB5nVjSCMNO+NNHdY3RAs8zxNurLWAdj6pehQdCA2zyU+Q=="],
 
-    "@bufbuild/protobuf": ["@bufbuild/protobuf@2.12.1", "", {}, "sha512-BvAMfS6LrgZiryOAZ4pBYucu4wG/Ei/9o9DZ9akbREnMLbPJiom2i8b9C8IsKErQoiKqVhrerzt3kOT/RrzLHg=="],
+    "@bufbuild/protobuf": ["@bufbuild/protobuf@2.14.0", "", {}, "sha512-C3UGsiCwSprE2NKIIFA3hCDlpXTMCAXRZuEVp88L1GY36Y41+rYL5fryE+nOFhp4p4JPQvdV8PQ4DWgHgeTE+w=="],
 
     "@changesets/apply-release-plan": ["@changesets/apply-release-plan@8.0.0", "", { "dependencies": { "@changesets/config": "^4.0.0", "@changesets/format": "^0.1.1", "@changesets/git": "^4.0.0", "@changesets/should-skip-package": "^1.0.0", "@changesets/types": "^7.0.0", "import-meta-resolve": "^4.2.0", "jsonc-parser": "^3.3.1", "semver": "^7.8.1" } }, "sha512-kUd2pbf1w5/AYmBMb0Tt+rkIPCjFJdT0SZMrkOjJT/WV/QbtmvkyB5jkV0oaNPheavprZk+SfUiozUti7TIL2w=="],
 
@@ -92,9 +92,9 @@
 
     "@laplace.live/event-bridge-server": ["@laplace.live/event-bridge-server@workspace:packages/server-bun"],
 
-    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.20", "", { "dependencies": { "@bufbuild/protobuf": "^2.12.1", "@laplace.live/internal": "^1.3.25" }, "peerDependencies": { "typescript": "^6.0.3" } }, "sha512-XLdVSQE/MOxjWzAbo1DP3UwJXKSbE/velWDgTWdX1/a6DnfJPeymOh3l4IwmV7GxmcVTvhHKA/kdaIul0fCJXQ=="],
+    "@laplace.live/event-types": ["@laplace.live/event-types@2.0.21", "", { "dependencies": { "@bufbuild/protobuf": "^2.13.0", "@laplace.live/internal": "^1.3.28" }, "peerDependencies": { "typescript": "^6.0.3" } }, "sha512-yzJtRW9AmEKGTZGChFmDJgjpoRW+gAde2pVcVpj4Qosbbt1DkldRVkFQj4uu+Asa25muW22VsbFajco0rHqFnQ=="],
 
-    "@laplace.live/internal": ["@laplace.live/internal@1.3.25", "", { "peerDependencies": { "typescript": "^5.9.2 || ^6" } }, "sha512-VdhhMImJu8H/eBX4GfJB8cpGNGMtYm1hhNfos/4RYot0vQGJe4Eq2R4cGAy+IBFv4Au2dids639UbM2DiWMfuA=="],
+    "@laplace.live/internal": ["@laplace.live/internal@1.3.31", "", { "peerDependencies": { "typescript": "^7.0.2" } }, "sha512-Ewe/6Cd1iA8uwtekxNDGbidu8A2xwfykTNuFvsnhl0XUZfeBhBby2Pyr1KJtBHSiN9MF0yp26Hz5xulqWZMCLA=="],
 
     "@manypkg/find-root": ["@manypkg/find-root@3.1.0", "", { "dependencies": { "@manypkg/tools": "^2.1.0" } }, "sha512-BcSqCyKhBVZ5YkSzOiheMCV41kqAFptW6xGqYSTjkVTl9XQpr+pqHhwgGCOHQtjDCv7Is6EFyA14Sm5GVbVABA=="],
 
