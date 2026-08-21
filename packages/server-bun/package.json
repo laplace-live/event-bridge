@@ -24,10 +24,10 @@
     "provenance": true
   },
   "dependencies": {
-    "@laplace.live/event-types": "^2.0.20"
+    "@laplace.live/event-types": "^2.0.21"
   },
   "devDependencies": {
     "bun-types": "latest",
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   }
 }
