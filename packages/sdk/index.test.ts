@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test } from 'bun:test'
 
-import { ConnectionState, fetchInfo, LaplaceEventBridgeClient } from './index'
+import { ConnectionState, type ConnectionStateDetail, fetchInfo, LaplaceEventBridgeClient } from './index'
 
 // Detect if running in AI agent environment for cleaner output
 const isAIAgent = process.env.CLAUDECODE === '1' || process.env.REPL_ID === '1' || process.env.AGENT === '1'
@@ -223,6 +223,212 @@ describe('LaplaceEventBridgeClient', () => {
       // The fact that we can successfully disconnect without errors
       // indicates that ping monitoring was properly cleaned up
       client.disconnect()
+    })
+  })
+
+  describe('role subprotocols', () => {
+    // A minimal bridge stand-in that records each websocket handshake and,
+    // like the real bridge, lets Bun echo the first offered subprotocol back.
+    type Handshake = { protocols: string[] | null; url: URL }
+    const handshakes: Handshake[] = []
+    let server: ReturnType<typeof Bun.serve>
+    let bridgeUrl = ''
+    let client: LaplaceEventBridgeClient | null = null
+
+    beforeAll(() => {
+      server = Bun.serve<undefined, never>({
+        port: 0,
+        hostname: 'localhost',
+        fetch(req, srv) {
+          const header = req.headers.get('sec-websocket-protocol')
+          handshakes.push({
+            protocols: header ? header.split(',').map(p => p.trim()) : null,
+            url: new URL(req.url),
+          })
+          return srv.upgrade(req) ? undefined : new Response('upgrade failed', { status: 400 })
+        },
+        websocket: {
+          open(ws) {
+            ws.send(JSON.stringify({ type: 'established', clientId: 'client-1' }))
+          },
+          message() {},
+        },
+      })
+      bridgeUrl = `ws://localhost:${server.port}`
+    })
+
+    afterAll(() => {
+      server.stop(true)
+    })
+
+    beforeEach(() => {
+      handshakes.length = 0
+    })
+
+    afterEach(() => {
+      client?.disconnect()
+      client = null
+    })
+
+    const lastHandshake = () => handshakes[handshakes.length - 1]
+
+    test("role: 'server' announces the server subprotocol with the token", async () => {
+      client = new LaplaceEventBridgeClient({ url: bridgeUrl, role: 'server', token: 'tok', reconnect: false })
+      await client.connect()
+
+      expect(lastHandshake()?.protocols).toEqual(['laplace-event-bridge-role-server', 'tok'])
+      // the token also travels as a query parameter
+      expect(lastHandshake()?.url.searchParams.get('token')).toBe('tok')
+      expect(client.getConnectionState()).toBe(ConnectionState.CONNECTED)
+    })
+
+    test("role: 'server' without a token still announces itself", async () => {
+      client = new LaplaceEventBridgeClient({ url: bridgeUrl, role: 'server', reconnect: false })
+      await client.connect()
+
+      expect(lastHandshake()?.protocols).toEqual(['laplace-event-bridge-role-server'])
+      expect(lastHandshake()?.url.searchParams.get('token')).toBeNull()
+    })
+
+    test('default client role with a token sends the client subprotocol pair', async () => {
+      client = new LaplaceEventBridgeClient({ url: bridgeUrl, token: 'tok', reconnect: false })
+      await client.connect()
+
+      expect(lastHandshake()?.protocols).toEqual(['laplace-event-bridge-role-client', 'tok'])
+      expect(lastHandshake()?.url.searchParams.get('token')).toBe('tok')
+    })
+
+    test('token-less client sends no subprotocol for backward compatibility', async () => {
+      client = new LaplaceEventBridgeClient({ url: bridgeUrl, reconnect: false })
+      await client.connect()
+
+      expect(lastHandshake()?.protocols).toBeNull()
+
+      // the handshake still completes and the established message lands
+      await new Promise(resolve => setTimeout(resolve, 50))
+      expect(client.getClientId()).toBe('client-1')
+    })
+  })
+
+  describe('connection state details', () => {
+    // A hand-driven WebSocket stub: tests trigger open/close explicitly, so
+    // state-detail behavior is asserted without real sockets or timers.
+    class MockWebSocket {
+      static instances: MockWebSocket[] = []
+      onopen: (() => void) | null = null
+      onmessage: ((event: { data: string }) => void) | null = null
+      onerror: ((error: unknown) => void) | null = null
+      onclose: ((event: CloseEvent) => void) | null = null
+
+      constructor(
+        public url: string,
+        public protocols: string[] = []
+      ) {
+        MockWebSocket.instances.push(this)
+      }
+
+      open(): void {
+        this.onopen?.()
+      }
+
+      emitClose(init: { code?: number; reason?: string } = {}): void {
+        this.onclose?.(new CloseEvent('close', { code: init.code ?? 1006, reason: init.reason ?? '', wasClean: false }))
+      }
+
+      // Called by the SDK; tests drive emitClose themselves so a deliberate
+      // disconnect() never triggers the reconnect path mid-test.
+      close(): void {}
+      send(_data: string): void {}
+    }
+
+    const RealWebSocket = globalThis.WebSocket
+    let client: LaplaceEventBridgeClient | null = null
+    let changes: { state: ConnectionState; detail: ConnectionStateDetail | undefined }[] = []
+
+    const trackChanges = (c: LaplaceEventBridgeClient) => {
+      c.onConnectionStateChange((state, detail) => {
+        changes.push({ state, detail })
+      })
+    }
+
+    beforeEach(() => {
+      MockWebSocket.instances = []
+      changes = []
+      globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket
+    })
+
+    afterEach(() => {
+      client?.disconnect()
+      client = null
+      globalThis.WebSocket = RealWebSocket
+    })
+
+    test('subscription callback and a fresh connect report zero attempts', async () => {
+      client = new LaplaceEventBridgeClient({ url: 'ws://mock', reconnect: false })
+      trackChanges(client)
+
+      // the initial callback fires immediately with the current state and no detail
+      expect(changes).toEqual([{ state: ConnectionState.DISCONNECTED, detail: undefined }])
+
+      const connected = client.connect()
+      MockWebSocket.instances[0]?.open()
+      await connected
+
+      expect(changes[1]).toEqual({ state: ConnectionState.CONNECTING, detail: { reconnectAttempts: 0 } })
+      expect(changes[2]).toEqual({ state: ConnectionState.CONNECTED, detail: { reconnectAttempts: 0 } })
+      expect(client.getReconnectAttempts()).toBe(0)
+    })
+
+    test('RECONNECTING carries the close event and attempt count', async () => {
+      client = new LaplaceEventBridgeClient({
+        url: 'ws://mock',
+        reconnect: true,
+        reconnectInterval: 60_000, // large enough that no reconnect fires during the test
+      })
+      trackChanges(client)
+
+      const connected = client.connect()
+      MockWebSocket.instances[0]?.open()
+      await connected
+
+      MockWebSocket.instances[0]?.emitClose({ code: 4321, reason: 'kicked' })
+
+      const reconnecting = changes.find(change => change.state === ConnectionState.RECONNECTING)
+      expect(reconnecting?.detail?.reconnectAttempts).toBe(1)
+      expect(reconnecting?.detail?.closeEvent?.code).toBe(4321)
+      expect(reconnecting?.detail?.closeEvent?.reason).toBe('kicked')
+      expect(client.getReconnectAttempts()).toBe(1)
+    })
+
+    test('DISCONNECTED with reconnect disabled carries the close event', async () => {
+      client = new LaplaceEventBridgeClient({ url: 'ws://mock', reconnect: false })
+      trackChanges(client)
+
+      const connected = client.connect()
+      MockWebSocket.instances[0]?.open()
+      await connected
+
+      MockWebSocket.instances[0]?.emitClose({ code: 1001, reason: 'going away' })
+
+      const disconnected = changes.at(-1)
+      expect(disconnected?.state).toBe(ConnectionState.DISCONNECTED)
+      expect(disconnected?.detail?.closeEvent?.code).toBe(1001)
+      expect(disconnected?.detail?.reconnectAttempts).toBe(0)
+    })
+
+    test('disconnect() resets the reconnect attempt counter', async () => {
+      client = new LaplaceEventBridgeClient({ url: 'ws://mock', reconnect: true, reconnectInterval: 60_000 })
+
+      const connected = client.connect()
+      MockWebSocket.instances[0]?.open()
+      await connected
+
+      MockWebSocket.instances[0]?.emitClose()
+      expect(client.getReconnectAttempts()).toBe(1)
+
+      client.disconnect()
+      expect(client.getReconnectAttempts()).toBe(0)
+      expect(client.getConnectionState()).toBe(ConnectionState.DISCONNECTED)
     })
   })
 })
