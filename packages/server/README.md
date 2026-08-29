@@ -15,7 +15,7 @@ This package provides a standalone Go implementation of the [LAPLACE Event Bridg
 
 ```bash
 # Navigate to the package
-cd packages/server-go
+cd packages/server
 
 # Run in development
 go run . --debug
@@ -39,11 +39,11 @@ go build -o leb-go
 A helper script is provided under `scripts/build`.
 
 ```bash
-# From packages/server-go
+# From packages/server
 ./scripts/build
 ```
 
-Resulting binaries will appear in `packages/server-go/dist` with names such as:
+Resulting binaries will appear in `packages/server/dist` with names such as:
 
 ```
 leb-server-darwin-arm64

@@ -1,5 +1,6 @@
 import { parseArgs } from 'node:util'
 import type { LaplaceEvent } from '@laplace.live/event-types'
+import type { ServerWebSocket } from 'bun'
 
 import pkg from './package.json' with { type: 'json' }
 
@@ -29,15 +30,21 @@ const DEBUG_MODE = process.env.DEBUG === '1' || process.env.DEBUG?.toLowerCase()
 // Network interface configuration
 const HOST = process.env.HOST || (values.host as string) || 'localhost'
 
+// Keepalive/backpressure tuning — keep in sync with the Go server
+// (packages/server/main.go: pongWait, slow-client drop). Bun pings
+// automatically and buffers outbound writes per connection.
+const IDLE_TIMEOUT = 60 // seconds without a message or pong before a peer is considered dead
+const BACKPRESSURE_LIMIT = 1024 * 1024 // bytes queued to a stalled client before it is dropped
+
 interface Client {
   id: string
   isServer: boolean // Flag to identify if this client is the laplace-chat server
 }
 
-const clients = new Map<any, Client>()
+const clients = new Map<ServerWebSocket<Client>, Client>()
 let nextClientId = 1
 
-const server = Bun.serve<Client, {}>({
+const server = Bun.serve<Client, never>({
   port: 9696,
   hostname: HOST,
   fetch(req, server) {
@@ -72,6 +79,10 @@ const server = Bun.serve<Client, {}>({
     return undefined
   },
   websocket: {
+    idleTimeout: IDLE_TIMEOUT,
+    sendPings: true, // ping quiet-but-healthy clients so idleTimeout only reaps dead peers
+    backpressureLimit: BACKPRESSURE_LIMIT,
+    closeOnBackpressureLimit: true, // drop consumers that stall past the buffer instead of losing messages silently
     open(ws) {
       const clientId = ws.data.id
       const isServer = ws.data.isServer
@@ -97,7 +108,7 @@ const server = Bun.serve<Client, {}>({
       try {
         const messageStr = message.toString()
         let parsedMessage: LaplaceEvent
-        let broadcastMessage: unknown
+        let broadcastMessage: string
 
         try {
           // Try to parse as JSON
@@ -134,9 +145,13 @@ const server = Bun.serve<Client, {}>({
           // console.log(`Broadcasting message from laplace-chat to all clients`)
 
           // Broadcast to all clients except the server
-          for (const [client, _data] of clients.entries()) {
+          for (const [client, data] of clients.entries()) {
             if (client !== ws) {
-              client.send(broadcastMessage)
+              // 0 = dropped: the connection is closing, or the client stalled past
+              // backpressureLimit (closeOnBackpressureLimit then drops it)
+              if (client.send(broadcastMessage) === 0) {
+                console.warn(`Dropped message to ${data.id} (slow or closing connection)`)
+              }
             }
           }
 

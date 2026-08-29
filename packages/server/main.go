@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -18,6 +19,15 @@ import (
 
 const defaultPort = 9696
 
+// gorilla/websocket allows only ONE concurrent writer per connection, so every
+// write is funneled through the client's writePump via a buffered queue.
+const (
+	writeWait      = 10 * time.Second    // per-write deadline
+	pongWait       = 60 * time.Second    // read deadline, refreshed on pong or any message
+	pingPeriod     = (pongWait * 9) / 10 // must be less than pongWait
+	sendBufferSize = 256                 // outbound queue; consumers stalled past this are dropped
+)
+
 // Client represents a connected websocket client
 // Each connection can be either the chat server (IsServer == true) or a regular client
 // ID has the format "server-<n>" or "client-<n>"
@@ -25,12 +35,16 @@ type Client struct {
 	Conn     *websocket.Conn
 	ID       string
 	IsServer bool
+
+	send      chan []byte
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 var (
 	clients      = make(map[*websocket.Conn]*Client)
 	clientsMutex sync.RWMutex
-	nextID       = 1
+	nextID       atomic.Int64
 )
 
 var upgrader = websocket.Upgrader{
@@ -84,27 +98,18 @@ func main() {
 			return
 		}
 
-		// accept same subprotocol back
+		// accept the same subprotocol back via the response header;
+		// mutating upgrader.Subprotocols here would race across connections
+		var responseHeader http.Header
 		if role != "" {
-			upgrader.Subprotocols = []string{role}
+			responseHeader = http.Header{"Sec-WebSocket-Protocol": {role}}
 		}
 
-		conn, err := upgrader.Upgrade(w, r, nil)
+		conn, err := upgrader.Upgrade(w, r, responseHeader)
 		if err != nil {
 			log.Error().Err(err).Msg("Upgrade error")
 			return
 		}
-
-		clientsMutex.Lock()
-		idPrefix := "client"
-		if isServer {
-			idPrefix = "server"
-		}
-		clientID := fmt.Sprintf("%s-%d", idPrefix, nextID)
-		nextID++
-		client := &Client{Conn: conn, ID: clientID, IsServer: isServer}
-		clients[conn] = client
-		clientsMutex.Unlock()
 
 		// Get the connection URL
 		scheme := "ws"
@@ -118,15 +123,36 @@ func main() {
 			connectURL += "?token=***"
 		}
 
-		// send welcome message
-		sendJSON(conn, map[string]any{
+		idPrefix := "client"
+		if isServer {
+			idPrefix = "server"
+		}
+		clientID := fmt.Sprintf("%s-%d", idPrefix, nextID.Add(1))
+		client := &Client{
+			Conn:     conn,
+			ID:       clientID,
+			IsServer: isServer,
+			send:     make(chan []byte, sendBufferSize),
+			done:     make(chan struct{}),
+		}
+
+		// seed the welcome while the queue is still private: the client isn't
+		// registered as a broadcast target yet, so FIFO delivers it first
+		client.enqueueJSON(map[string]any{
 			"type":     "established",
 			"clientId": clientID,
 			"isServer": isServer,
 			"message":  fmt.Sprintf("Connected to LAPLACE Event Bridge: %s", connectURL),
 		})
 
-		go handleConnection(client, debugMode)
+		clientsMutex.Lock()
+		clients[conn] = client
+		clientsMutex.Unlock()
+
+		log.Info().Msgf("Client connected: %s%s", clientID, ternary(isServer, " (laplace-chat server)", ""))
+
+		go client.writePump()
+		go client.readPump(debugMode)
 	})
 
 	addr := host + ":" + strconv.Itoa(port)
@@ -135,25 +161,93 @@ func main() {
 	}
 }
 
-// handleConnection processes messages for a single websocket connection
-func handleConnection(c *Client, debug bool) {
-	conn := c.Conn
+// close marks the client dead and closes the socket; safe to call from any
+// goroutine. It never takes clientsMutex — unregistration is readPump's job,
+// which runs exactly once for every registered client.
+func (c *Client) close() {
+	c.closeOnce.Do(func() {
+		close(c.done)
+		c.Conn.Close()
+	})
+}
+
+// enqueue hands a message to writePump without ever blocking the caller
+func (c *Client) enqueue(msg []byte) {
+	select {
+	case <-c.done:
+	case c.send <- msg:
+	default:
+		log.Warn().Msgf("Dropping slow client %s (send buffer full)", c.ID)
+		c.close()
+	}
+}
+
+func (c *Client) enqueueJSON(v any) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return
+	}
+	c.enqueue(data)
+}
+
+// writePump is the only goroutine allowed to write to the connection; it also
+// pings the peer so half-open connections get reaped by the read deadline
+func (c *Client) writePump() {
+	ticker := time.NewTicker(pingPeriod)
 	defer func() {
-		conn.Close()
+		ticker.Stop()
+		c.close()
+	}()
+
+	for {
+		select {
+		case msg := <-c.send:
+			_ = c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.Conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+				return
+			}
+		case <-ticker.C:
+			if err := c.Conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait)); err != nil {
+				return
+			}
+		case <-c.done:
+			// best-effort close frame so browsers see a clean shutdown instead of 1006
+			_ = c.Conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(writeWait))
+			return
+		}
+	}
+}
+
+// refreshReadDeadline extends the read deadline, marking the peer live for
+// another pongWait after a pong or any message
+func (c *Client) refreshReadDeadline() error {
+	return c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+}
+
+// readPump processes messages for a single websocket connection
+func (c *Client) readPump(debug bool) {
+	defer func() {
+		c.close()
 		clientsMutex.Lock()
-		delete(clients, conn)
+		delete(clients, c.Conn)
 		clientsMutex.Unlock()
 		log.Info().Msgf("Client disconnected: %s%s", c.ID, ternary(c.IsServer, " (laplace-chat server)", ""))
 	}()
 
+	_ = c.refreshReadDeadline()
+	c.Conn.SetPongHandler(func(string) error {
+		return c.refreshReadDeadline()
+	})
+
 	for {
-		_, msg, err := conn.ReadMessage()
+		_, msg, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Warn().Err(err).Msgf("Read error from %s", c.ID)
 			}
 			break
 		}
+		_ = c.refreshReadDeadline()
 
 		processMessage(c, msg, debug)
 	}
@@ -197,28 +291,35 @@ func processMessage(sender *Client, msg []byte, debug bool) {
 	broadcastBytes, _ := json.Marshal(broadcast)
 
 	if isServer {
-		// broadcast to all clients except sender
+		// broadcast to all clients except sender; snapshot under the lock and
+		// enqueue outside it, so a slow-client drop (enqueue → close) never
+		// runs while holding clientsMutex
 		clientsMutex.RLock()
+		targets := make([]*Client, 0, len(clients))
 		for conn, info := range clients {
 			if conn == sender.Conn {
 				continue
 			}
-			_ = conn.WriteMessage(websocket.TextMessage, broadcastBytes)
-			if debug {
-				log.Debug().Msgf("Sent message to %s", info.ID)
-			}
+			targets = append(targets, info)
 		}
 		clientsMutex.RUnlock()
 
+		for _, target := range targets {
+			target.enqueue(broadcastBytes)
+			if debug {
+				log.Debug().Msgf("Sent message to %s", target.ID)
+			}
+		}
+
 		// confirmation back to server
-		sendJSON(sender.Conn, map[string]any{
+		sender.enqueueJSON(map[string]any{
 			"type":        "broadcast-success",
-			"clientCount": numClients() - 1,
+			"clientCount": len(targets),
 			"timestamp":   time.Now().UnixMilli(),
 		})
 	} else {
 		// echo back acknowledgement
-		sendJSON(sender.Conn, map[string]any{
+		sender.enqueueJSON(map[string]any{
 			"type":      "client-message-received",
 			"message":   "Message received (client-to-server messages are not relayed)",
 			"timestamp": time.Now().UnixMilli(),
@@ -227,17 +328,6 @@ func processMessage(sender *Client, msg []byte, debug bool) {
 }
 
 // helper functions
-func sendJSON(conn *websocket.Conn, v any) {
-	data, _ := json.Marshal(v)
-	_ = conn.WriteMessage(websocket.TextMessage, data)
-}
-
-func numClients() int {
-	clientsMutex.RLock()
-	defer clientsMutex.RUnlock()
-	return len(clients)
-}
-
 func banner(host string, port int, authEnabled, debug bool) {
 	fmt.Println("🌸 LAPLACE Event Bridge Server")
 	fmt.Printf("🚀 Server running at http://%s:%d\n", host, port)
