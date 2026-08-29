@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.20
+
+### Patch Changes
+
+- 0731353: Fix race condition and reconnection issues
+
 ## 0.3.19
 
 ### Patch Changes
