@@ -15,7 +15,16 @@ export type EventTypeMap = {
 
 export type EventHandler<T extends LaplaceEvent> = (event: T) => void
 export type AnyEventHandler = (event: LaplaceEvent) => void
-export type ConnectionStateChangeHandler = (state: ConnectionState) => void
+
+/** Extra context passed to connection state change handlers. */
+export interface ConnectionStateDetail {
+  /** The raw close event, present when the state change was caused by a socket close. */
+  closeEvent?: CloseEvent
+  /** Reconnect attempts made so far in the current outage; 0 when connected. */
+  reconnectAttempts: number
+}
+
+export type ConnectionStateChangeHandler = (state: ConnectionState, detail?: ConnectionStateDetail) => void
 
 export interface ConnectionOptions {
   /**
@@ -28,6 +37,14 @@ export interface ConnectionOptions {
    * The authentication token for the LAPLACE Event Bridge server
    */
   token?: string
+  /**
+   * Connection role. `'client'` (default) receives broadcast events;
+   * `'server'` is the event producer (e.g. LAPLACE Chat) whose messages the
+   * bridge fans out to all clients.
+   *
+   * @default 'client'
+   */
+  role?: 'client' | 'server'
   /**
    * Whether to automatically reconnect to the LAPLACE Event Bridge server
    */
@@ -114,6 +131,7 @@ export class LaplaceEventBridgeClient {
   private options: Required<ConnectionOptions> = {
     url: 'ws://localhost:9696',
     token: '',
+    role: 'client',
     reconnect: true,
     reconnectInterval: 3000,
     maxReconnectAttempts: 1000,
@@ -135,14 +153,23 @@ export class LaplaceEventBridgeClient {
           this.ws.close()
         }
 
-        this.setConnectionState(ConnectionState.CONNECTING)
+        this.setConnectionState(ConnectionState.CONNECTING, { reconnectAttempts: this.reconnectAttempts })
 
         let url = this.options.url
         const protocols: string[] = []
-        if (this.options.token) {
-          // Add the token as the second protocol parameter
+        if (this.options.role === 'server') {
+          // Server role must always announce itself — the bridge treats a
+          // bare connection as a client
+          protocols.push('laplace-event-bridge-role-server')
+          if (this.options.token) {
+            protocols.push(this.options.token)
+          }
+        } else if (this.options.token) {
+          // Token-less clients keep sending no subprotocol so older bridge
+          // servers that don't echo one keep working
           protocols.push('laplace-event-bridge-role-client', this.options.token)
-
+        }
+        if (this.options.token) {
           // Also add token as a query parameter
           const urlObj = new URL(url)
           urlObj.searchParams.set('token', this.options.token)
@@ -152,8 +179,8 @@ export class LaplaceEventBridgeClient {
         this.ws = new WebSocket(url, protocols)
 
         this.ws.onopen = () => {
-          this.setConnectionState(ConnectionState.CONNECTED)
           this.reconnectAttempts = 0
+          this.setConnectionState(ConnectionState.CONNECTED, { reconnectAttempts: 0 })
           resolve()
         }
 
@@ -213,7 +240,7 @@ export class LaplaceEventBridgeClient {
           reject(error)
         }
 
-        this.ws.onclose = () => {
+        this.ws.onclose = closeEvent => {
           console.log('Disconnected from LAPLACE Event Bridge')
 
           // Stop ping monitoring before attempting reconnection
@@ -224,7 +251,10 @@ export class LaplaceEventBridgeClient {
 
           if (this.options.reconnect && this.reconnectAttempts < this.options.maxReconnectAttempts) {
             this.reconnectAttempts++
-            this.setConnectionState(ConnectionState.RECONNECTING)
+            this.setConnectionState(ConnectionState.RECONNECTING, {
+              closeEvent,
+              reconnectAttempts: this.reconnectAttempts,
+            })
 
             // Calculate exponential backoff with cap at 60 seconds
             const baseInterval = this.options.reconnectInterval
@@ -247,7 +277,10 @@ export class LaplaceEventBridgeClient {
               })
             }, delay)
           } else {
-            this.setConnectionState(ConnectionState.DISCONNECTED)
+            this.setConnectionState(ConnectionState.DISCONNECTED, {
+              closeEvent,
+              reconnectAttempts: this.reconnectAttempts,
+            })
           }
         }
       } catch (err) {
@@ -274,6 +307,7 @@ export class LaplaceEventBridgeClient {
     }
 
     this.setConnectionState(ConnectionState.DISCONNECTED)
+    this.reconnectAttempts = 0
     this.clientId = null
     this.serverVersion = null
     this.lastPingTime = null
@@ -380,6 +414,11 @@ export class LaplaceEventBridgeClient {
     return this.clientId
   }
 
+  /** Reconnect attempts made so far in the current outage; 0 when connected or idle. */
+  public getReconnectAttempts(): number {
+    return this.reconnectAttempts
+  }
+
   /**
    * Fetch `/info` (configured rooms + instance metadata) from the connected
    * LAPLACE Event Fetcher, using this client's configured url and token. Does
@@ -403,13 +442,13 @@ export class LaplaceEventBridgeClient {
     this.ws.send(JSON.stringify(event))
   }
 
-  private setConnectionState(state: ConnectionState): void {
+  private setConnectionState(state: ConnectionState, detail?: ConnectionStateDetail): void {
     if (this.connectionState !== state) {
       this.connectionState = state
       // Notify all connection state change handlers
       for (const handler of this.connectionStateHandlers) {
         try {
-          handler(state)
+          handler(state, detail)
         } catch (err) {
           console.error('Error in connection state change handler:', err)
         }
