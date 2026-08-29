@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.2.0
+
+### Minor Changes
+
+- 5ae12ad: Ability to use SDK as server bridge
+
 ## 1.1.0
 
 ### Minor Changes
