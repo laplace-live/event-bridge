@@ -50,6 +50,15 @@ export interface ConnectionOptions {
    */
   reconnect?: boolean
   /**
+   * Whether a failed connect() whose socket never opened should enter the
+   * reconnect loop. When false, automatic reconnection only happens after an
+   * established connection drops — a manual connect to a dead server fails
+   * once instead of retrying.
+   *
+   * @default true
+   */
+  reconnectOnInitialFailure?: boolean
+  /**
    * The base interval between reconnect attempts in milliseconds.
    * With exponential backoff, each attempt multiplies this by 1.5^(attempt-1).
    * The maximum interval is capped at 60 seconds.
@@ -122,6 +131,8 @@ export class LaplaceEventBridgeClient {
   private connectionStateHandlers: ConnectionStateChangeHandler[] = []
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempts = 0
+  /** Whether the socket opened at least once since the last manual connect()/disconnect() */
+  private hasEverConnected = false
   private clientId: string | null = null
   private serverVersion: string | null = null
   private connectionState: ConnectionState = ConnectionState.DISCONNECTED
@@ -133,6 +144,7 @@ export class LaplaceEventBridgeClient {
     token: '',
     role: 'client',
     reconnect: true,
+    reconnectOnInitialFailure: true,
     reconnectInterval: 3000,
     maxReconnectAttempts: 1000,
     pingTimeout: 90000, // 90 seconds
@@ -147,8 +159,19 @@ export class LaplaceEventBridgeClient {
    * @returns A promise that resolves when the connection is established
    */
   public connect(): Promise<void> {
+    return this.connectInternal(false)
+  }
+
+  private connectInternal(isRetry: boolean): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
+        // A manual connect starts a fresh cycle: retries from a previous
+        // outage must not leak into it
+        if (!isRetry) {
+          this.reconnectAttempts = 0
+          this.hasEverConnected = false
+        }
+
         if (this.ws) {
           this.ws.close()
         }
@@ -180,6 +203,7 @@ export class LaplaceEventBridgeClient {
 
         this.ws.onopen = () => {
           this.reconnectAttempts = 0
+          this.hasEverConnected = true
           this.setConnectionState(ConnectionState.CONNECTED, { reconnectAttempts: 0 })
           resolve()
         }
@@ -249,7 +273,12 @@ export class LaplaceEventBridgeClient {
           // Clear ping state
           this.lastPingTime = null
 
-          if (this.options.reconnect && this.reconnectAttempts < this.options.maxReconnectAttempts) {
+          const shouldRetry =
+            this.options.reconnect &&
+            (this.hasEverConnected || this.options.reconnectOnInitialFailure) &&
+            this.reconnectAttempts < this.options.maxReconnectAttempts
+
+          if (shouldRetry) {
             this.reconnectAttempts++
             this.setConnectionState(ConnectionState.RECONNECTING, {
               closeEvent,
@@ -272,7 +301,7 @@ export class LaplaceEventBridgeClient {
               `Attempting to reconnect (${this.reconnectAttempts}/${this.options.maxReconnectAttempts}) in ${delay}ms...`
             )
             this.reconnectTimer = setTimeout(() => {
-              this.connect().catch(err => {
+              this.connectInternal(true).catch(err => {
                 console.error('Reconnection failed:', err)
               })
             }, delay)
@@ -308,6 +337,7 @@ export class LaplaceEventBridgeClient {
 
     this.setConnectionState(ConnectionState.DISCONNECTED)
     this.reconnectAttempts = 0
+    this.hasEverConnected = false
     this.clientId = null
     this.serverVersion = null
     this.lastPingTime = null

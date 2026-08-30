@@ -416,6 +416,43 @@ describe('LaplaceEventBridgeClient', () => {
       expect(disconnected?.detail?.reconnectAttempts).toBe(0)
     })
 
+    test('reconnectOnInitialFailure: false — a connect that never opened fails once, no retry', () => {
+      client = new LaplaceEventBridgeClient({
+        url: 'ws://mock',
+        reconnect: true,
+        reconnectOnInitialFailure: false,
+        reconnectInterval: 60_000,
+      })
+      trackChanges(client)
+
+      client.connect().catch(() => {}) // rejection via onerror is not driven here
+      MockWebSocket.instances[0]?.emitClose() // socket dies before ever opening
+
+      const last = changes.at(-1)
+      expect(last?.state).toBe(ConnectionState.DISCONNECTED)
+      expect(last?.detail?.reconnectAttempts).toBe(0)
+      expect(changes.some(change => change.state === ConnectionState.RECONNECTING)).toBe(false)
+    })
+
+    test('reconnectOnInitialFailure: false still retries after an established connection drops', async () => {
+      client = new LaplaceEventBridgeClient({
+        url: 'ws://mock',
+        reconnect: true,
+        reconnectOnInitialFailure: false,
+        reconnectInterval: 60_000,
+      })
+      trackChanges(client)
+
+      const connected = client.connect()
+      MockWebSocket.instances[0]?.open()
+      await connected
+
+      MockWebSocket.instances[0]?.emitClose()
+
+      expect(changes.at(-1)?.state).toBe(ConnectionState.RECONNECTING)
+      expect(client.getReconnectAttempts()).toBe(1)
+    })
+
     test('disconnect() resets the reconnect attempt counter', async () => {
       client = new LaplaceEventBridgeClient({ url: 'ws://mock', reconnect: true, reconnectInterval: 60_000 })
 
