@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.2.1
+
+### Patch Changes
+
+- 6f97958: Improved initial reconnection logic
+
 ## 1.2.0
 
 ### Minor Changes
