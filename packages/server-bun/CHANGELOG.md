@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-server
 
+## 0.3.21
+
+### Patch Changes
+
+- 9dd9b99: simply release process
+
 ## 0.3.20
 
 ### Patch Changes

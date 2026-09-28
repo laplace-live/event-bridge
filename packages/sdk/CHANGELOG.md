@@ -1,5 +1,11 @@
 # @laplace.live/event-bridge-sdk
 
+## 1.2.2
+
+### Patch Changes
+
+- 9dd9b99: simply release process
+
 ## 1.2.1
 
 ### Patch Changes
