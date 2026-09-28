@@ -17,10 +17,6 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-      pull-requests: write
 
     steps:
       - name: Checkout Repo
@@ -43,59 +39,33 @@ jobs:
       - name: Build packages
         run: bun run build:all
 
+      # Release writes (the Version Packages PR, tags and GitHub Releases) use
+      # a GitHub App token instead of `GITHUB_TOKEN`. Events caused by
+      # `GITHUB_TOKEN` don't trigger other workflows, so the server's Releases
+      # would never start build.yml, and checks on the Version Packages PR
+      # would wait for manual approval.
+      #
+      # Requires the laplace-release-bot GitHub App installed on this repo with
+      # Contents and Pull requests read & write, its Client ID and private key
+      # stored in the `RELEASE_APP_CLIENT_ID` and `RELEASE_APP_PRIVATE_KEY` org
+      # secrets.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v2
         with:
           publish-script: bun run release
           version-script: bun run version
-
-      - name: Check if server package was published
-        if: steps.changesets.outputs.published == 'true'
-        id: check_server
-        run: |
-          # Parse the published packages JSON
-          PUBLISHED_PACKAGES='${{ steps.changesets.outputs.published-packages }}'
-
-          # Debug output to see format
-          echo "Published packages: $PUBLISHED_PACKAGES"
-
-          # Check if @laplace.live/event-bridge-server is in the published packages
-          if echo "$PUBLISHED_PACKAGES" | grep -q "@laplace.live/event-bridge-server"; then
-            echo "Server package was published"
-            echo "server_published=true" >> $GITHUB_OUTPUT
-          else
-            echo "Server package was not published"
-            echo "server_published=false" >> $GITHUB_OUTPUT
-          fi
-
-          # Get the version of the server package if it was published
-          if echo "$PUBLISHED_PACKAGES" | grep -q "@laplace.live/event-bridge-server"; then
-            # Try different formats based on changesets output format
-            if echo "$PUBLISHED_PACKAGES" | jq -e . >/dev/null 2>&1; then
-              # JSON format
-              VERSION=$(echo "$PUBLISHED_PACKAGES" | jq -r '.[] | select(.name=="@laplace.live/event-bridge-server") | .version')
-            else
-              # String format
-              VERSION=$(echo "$PUBLISHED_PACKAGES" | grep -o '"@laplace.live/event-bridge-server":[^,}]*' | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-            fi
-
-            echo "Server version: $VERSION"
-            echo "server_version=$VERSION" >> $GITHUB_OUTPUT
-
-            # Full tag with package name
-            FULL_TAG="@laplace.live/event-bridge-server@$VERSION"
-            echo "server_tag=$FULL_TAG" >> $GITHUB_OUTPUT
-
-            # Simple version tag (e.g. v1.2.3)
-            SIMPLE_TAG="v$VERSION"
-            echo "simple_tag=$SIMPLE_TAG" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Trigger Build Workflow
-        if: steps.check_server.outputs.server_published == 'true'
-        uses: peter-evans/repository-dispatch@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: release-created
-          client-payload: '{"package": "@laplace.live/event-bridge-server", "version": "${{ steps.check_server.outputs.server_version }}", "tag": "${{ steps.check_server.outputs.server_tag }}", "simple_tag": "${{ steps.check_server.outputs.simple_tag }}"}'
+          # The Release this creates for @laplace.live/event-bridge-server
+          # fires build.yml's `release: created` trigger, which builds the
+          # server binaries and uploads them to it. v2 reads the token only
+          # from this input, not from the `GITHUB_TOKEN` env var.
+          github-token: ${{ steps.app-token.outputs.token }}
