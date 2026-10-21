@@ -94,7 +94,14 @@ jobs:
             version=$(jq -r .version "$manifest")
             tag="$name@$version"
             [ "$name" = "@laplace.live/event-bridge-server" ] && continue
-            git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null || continue
+            status=0
+            git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null || status=$?
+            # 2: not tagged yet. Anything else is a failed lookup, which must not pass for "nothing to release".
+            if [ "$status" -eq 2 ]; then continue; fi
+            if [ "$status" -ne 0 ]; then
+              echo "::error::Could not look up $tag"
+              exit 1
+            fi
             sh .github/scripts/changelog-section.sh "$(dirname "$manifest")/CHANGELOG.md" "$version" > notes.md
             sh .github/scripts/publish-release.sh "$tag" notes.md
           done
