@@ -17,8 +17,6 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    outputs:
-      published-packages: ${{ steps.changesets.outputs.published-packages }}
 
     steps:
       - name: Checkout Repo
@@ -76,31 +74,27 @@ jobs:
           # `GITHUB_TOKEN` env var.
           github-token: ${{ steps.app-token.outputs.token }}
 
+  # Reconciles rather than trusting this run's publish output, so a rerun or the
+  # next push recovers a release that failed to publish.
   github-releases:
     needs: release
-    if: needs.release.outputs.published-packages != '[]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
 
-      - name: Publish a release per tagged package
+      - name: Publish releases for tagged versions
         env:
           GH_TOKEN: ${{ github.token }}
-          PUBLISHED: ${{ needs.release.outputs.published-packages }}
         run: |
           # The server's release is published by build.yml, with its binaries attached.
-          echo "$PUBLISHED" | jq -c '.[] | select(.name != "@laplace.live/event-bridge-server")' | while read -r pkg; do
-            name=$(echo "$pkg" | jq -r .name)
-            version=$(echo "$pkg" | jq -r .version)
-            for manifest in packages/*/package.json; do
-              [ "$(jq -r .name "$manifest")" = "$name" ] && dir=$(dirname "$manifest")
-            done
-            sh .github/scripts/changelog-section.sh "$dir/CHANGELOG.md" "$version" > notes.md
-            if [ ! -s notes.md ]; then
-              echo "::error::No CHANGELOG entry for $name@$version"
-              exit 1
-            fi
-            gh release create "$name@$version" --verify-tag --title "$name@$version" --notes-file notes.md
+          for manifest in packages/*/package.json; do
+            name=$(jq -r .name "$manifest")
+            version=$(jq -r .version "$manifest")
+            tag="$name@$version"
+            [ "$name" = "@laplace.live/event-bridge-server" ] && continue
+            git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null || continue
+            sh .github/scripts/changelog-section.sh "$(dirname "$manifest")/CHANGELOG.md" "$version" > notes.md
+            sh .github/scripts/publish-release.sh "$tag" notes.md
           done

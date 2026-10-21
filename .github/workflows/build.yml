@@ -57,6 +57,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
+          if-no-files-found: error
           path: |
             packages/server/dist/leb-*
 
@@ -101,6 +102,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-binaries
+          if-no-files-found: error
           path: |
             packages/server/dist/leb-server-windows-x64.exe
 
@@ -129,9 +131,11 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           sh .github/scripts/changelog-section.sh packages/server-bun/CHANGELOG.md "${TAG##*@}" > notes.md
-          if [ ! -s notes.md ]; then
-            echo "::error::No CHANGELOG entry for $TAG"
-            exit 1
-          fi
-          # With assets, gh creates a draft, uploads them, then publishes.
-          gh release create "$TAG" dist/leb-* --verify-tag --title "$TAG" --notes-file notes.md
+          # An immutable release can't take a binary later, so refuse to publish without all of them.
+          for binary in darwin-arm64 linux-x64 linux-arm64 windows-x64.exe; do
+            if [ ! -s "dist/leb-server-$binary" ]; then
+              echo "::error::Missing leb-server-$binary"
+              exit 1
+            fi
+          done
+          sh .github/scripts/publish-release.sh "$TAG" notes.md dist/leb-*
