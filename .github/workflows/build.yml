@@ -3,16 +3,19 @@ name: Build Server Binaries
 on:
   push:
     branches: [master]
+    # Pushed by release.yml (changesets) with the release bot's token, so this
+    # trigger fires. If a run is ever missed, dispatch this workflow on the tag
+    # to publish the release.
+    tags: ['@laplace.live/event-bridge-server@*']
   pull_request:
     branches: [master]
-  release:
-    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-unix:
-    # Changesets creates a Release for every published package; only the
-    # server's Releases get binaries.
-    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, '@laplace.live/event-bridge-server@')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -54,22 +57,11 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
+          if-no-files-found: error
           path: |
             packages/server/dist/leb-*
 
-      - name: Upload to GitHub release
-        if: github.event_name == 'release'
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/**/dist/leb-*
-          file_glob: true
-          tag: ${{ github.ref }}
-          overwrite: true
-
   build-windows:
-    # Same filter as build-unix.
-    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, '@laplace.live/event-bridge-server@')
     runs-on: windows-latest
 
     steps:
@@ -91,7 +83,7 @@ jobs:
           GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o dist/leb-server-windows-x64.exe
 
       - name: Sign Windows binary with Trusted Signing
-        if: github.event_name == 'release'
+        if: startsWith(github.ref, 'refs/tags/@laplace.live/event-bridge-server@')
         uses: azure/artifact-signing-action@v2
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -110,15 +102,44 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-binaries
+          if-no-files-found: error
           path: |
             packages/server/dist/leb-server-windows-x64.exe
 
-      - name: Upload to GitHub release
-        if: github.event_name == 'release'
-        uses: svenstaro/upload-release-action@v2
+  # The only job with write access: builds (which run PR code) stay read-only.
+  # Releases are immutable once published, so this publishes the server's
+  # release with every binary attached at once.
+  github-release:
+    needs: [build-unix, build-windows]
+    if: startsWith(github.ref, 'refs/tags/@laplace.live/event-bridge-server@')
+    runs-on: ubuntu-latest
+    # One publisher per tag: a rerun queues behind a running one instead of racing over the same draft.
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: packages/**/dist/leb-*
-          file_glob: true
-          tag: ${{ github.ref }}
-          overwrite: true
+          pattern: '*-binaries'
+          path: dist
+          merge-multiple: true
+
+      - name: Publish the release with its binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          sh .github/scripts/changelog-section.sh packages/server-bun/CHANGELOG.md "${TAG##*@}" > notes.md
+          # An immutable release can't take a binary later, so refuse to publish without all of them.
+          for binary in darwin-arm64 linux-x64 linux-arm64 windows-x64.exe; do
+            if [ ! -s "dist/leb-server-$binary" ]; then
+              echo "::error::Missing leb-server-$binary"
+              exit 1
+            fi
+          done
+          sh .github/scripts/publish-release.sh "$TAG" notes.md dist/leb-*
