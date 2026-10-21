@@ -113,6 +113,10 @@ jobs:
     needs: [build-unix, build-windows]
     if: startsWith(github.ref, 'refs/tags/@laplace.live/event-bridge-server@')
     runs-on: ubuntu-latest
+    # One publisher per tag: a rerun queues behind a running one instead of racing over the same draft.
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write
 
