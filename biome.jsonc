@@ -63,5 +63,16 @@
       "trailingCommas": "es5",
       "arrowParentheses": "asNeeded"
     }
+  },
+  // Biome 2.6 formats Markdown and YAML by default; leave them to the editor, as before.
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "enabled": false
+    }
   }
 }
