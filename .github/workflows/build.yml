@@ -6,7 +6,7 @@ on:
     # Pushed by release.yml (changesets) with the release bot's token, so this
     # trigger fires. If a run is ever missed, dispatch this workflow on the tag
     # to publish the release.
-    tags: ['@laplace.live/event-bridge-server@*']
+    tags: ["@laplace.live/event-bridge-server@*"]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -125,7 +125,7 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          pattern: '*-binaries'
+          pattern: "*-binaries"
           path: dist
           merge-multiple: true
 
